@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { User, LogOut, UserCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User, LogOut, UserCircle, ArrowLeft } from 'lucide-react';
 import { ProfileModal } from '../modals/ProfileModal';
 import { useProfile } from '../../hooks/useProfile';
 
@@ -7,17 +8,32 @@ export function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const { profile, isLoading } = useProfile();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleProfileClick = () => {
     setShowUserMenu(false);
     setShowProfileModal(true);
   };
 
+  // Only show back button if we're not at the dashboard root
+  const showBackButton = location.pathname !== '/index';
+
   return (
     <>
       <nav className="bg-white shadow-md px-6 py-4">
-        <div className="flex justify-end items-center">
-          <div className="flex items-center">
+        <div className="flex justify-between items-center">
+          {showBackButton && (
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 mr-1" />
+              <span className="text-sm">Regresar</span>
+            </button>
+          )}
+          
+          <div className="flex items-center ml-auto">
             <span className="mr-4 text-gray-700">
               {isLoading ? 'Cargando...' : `Bienvenido, ${profile?.nombre}`}
             </span>

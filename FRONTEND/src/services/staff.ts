@@ -72,6 +72,9 @@ export const getStaffList = async (
     totalUsers: response.data.total_users
   };
 };
+export const deleteStaff = async (id: string): Promise<void> => {
+  await api.delete(`/api/user/empleado/delete/${id}/`);
+};
 
 export const createStaff = async (data: CreateStaffData): Promise<void> => {
   const formData = new FormData();

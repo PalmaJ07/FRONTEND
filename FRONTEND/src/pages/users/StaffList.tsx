@@ -1,16 +1,22 @@
-import { useState, useEffect } from 'react';
-import { UserPlus } from 'lucide-react';
-import Swal from 'sweetalert2';
-import { Table } from '../../components/common/Table';
-import { Pagination } from '../../components/common/Pagination';
-import { SearchBar } from '../../components/common/SearchBar';
-import { StaffFilters } from '../../components/users/StaffFilters';
-import { StatusToggle } from '../../components/common/StatusToggle';
-import { AddStaffModal } from '../../components/users/AddStaffModal';
-import { EditStaffModal } from './EditStaffModal';
-import { Staff, CreateStaffData } from '../../types/users';
-import { getStaffList, createStaff, updateStaff, toggleStaffStatus } from '../../services/staff';
-import { useDebounce } from '../../hooks/useDebounce';
+import { useState, useEffect } from "react";
+import { UserPlus } from "lucide-react";
+import Swal from "sweetalert2";
+import { Table } from "../../components/common/Table";
+import { Pagination } from "../../components/common/Pagination";
+import { SearchBar } from "../../components/common/SearchBar";
+import { StaffFilters } from "../../components/users/StaffFilters";
+import { StatusToggle } from "../../components/common/StatusToggle";
+import { AddStaffModal } from "../../components/users/AddStaffModal";
+import { EditStaffModal } from "./EditStaffModal";
+import { Staff, CreateStaffData } from "../../types/users";
+import {
+  getStaffList,
+  createStaff,
+  updateStaff,
+  toggleStaffStatus,
+  deleteStaff
+} from "../../services/staff";
+import { useDebounce } from "../../hooks/useDebounce";
 
 export function StaffList() {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -18,9 +24,9 @@ export function StaffList() {
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userType, setUserType] = useState('');
-  const [status, setStatus] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [userType, setUserType] = useState("");
+  const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -42,17 +48,17 @@ export function StaffList() {
         status ? parseInt(status) : undefined,
         debouncedSearch || undefined
       );
-      
+
       setStaff(data.staff);
       setTotalPages(data.totalPages);
       setTotalItems(data.totalUsers);
     } catch (error) {
-      console.error('Error loading staff:', error);
+      console.error("Error loading staff:", error);
       await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo cargar la lista de colaboradores',
-        icon: 'error',
-        confirmButtonColor: '#EF4444',
+        title: "Error",
+        text: "No se pudo cargar la lista de colaboradores",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
       });
     } finally {
       setIsLoading(false);
@@ -64,21 +70,21 @@ export function StaffList() {
       await createStaff(data);
       setShowAddModal(false);
       await loadStaff();
-      
+
       await Swal.fire({
-        title: 'Éxito',
-        text: 'Colaborador creado exitosamente',
-        icon: 'success',
+        title: "Éxito",
+        text: "Colaborador creado exitosamente",
+        icon: "success",
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     } catch (error) {
-      console.error('Error creating staff:', error);
+      console.error("Error creating staff:", error);
       await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo crear el colaborador',
-        icon: 'error',
-        confirmButtonColor: '#EF4444',
+        title: "Error",
+        text: "No se pudo crear el colaborador",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
       });
     }
   };
@@ -91,36 +97,72 @@ export function StaffList() {
       setShowEditModal(false);
       setSelectedStaff(null);
       await loadStaff();
-      
+
       await Swal.fire({
-        title: 'Éxito',
-        text: 'Colaborador actualizado exitosamente',
-        icon: 'success',
+        title: "Éxito",
+        text: "Colaborador actualizado exitosamente",
+        icon: "success",
         timer: 1500,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     } catch (error) {
-      console.error('Error updating staff:', error);
+      console.error("Error updating staff:", error);
       await Swal.fire({
-        title: 'Error',
-        text: 'No se pudo actualizar el colaborador',
-        icon: 'error',
-        confirmButtonColor: '#EF4444',
+        title: "Error",
+        text: "No se pudo actualizar el colaborador",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
       });
     }
   };
 
-  
+
 
   const handleStatusToggle = async (staff: Staff) => {
     try {
       await toggleStaffStatus(staff.id);
       await loadStaff();
     } catch (error) {
-      console.error('Error toggling staff status:', error);
+      console.error("Error toggling staff status:", error);
+      await Swal.fire({
+        title: "Error",
+        text: "No se pudo cambiar el estado del colaborador",
+        icon: "error",
+        confirmButtonColor: "#EF4444",
+      });
+    }
+  };
+
+  const handleDelete = async (staff: Staff) => {
+    try {
+      const result = await Swal.fire({
+        title: '¿Eliminar colaborador?',
+        text: `¿Estás seguro de que deseas eliminar a ${staff.name}?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        await deleteStaff(staff.id);
+        await loadStaff();
+        
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'El colaborador ha sido eliminado exitosamente',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting staff:', error);
       await Swal.fire({
         title: 'Error',
-        text: 'No se pudo cambiar el estado del colaborador',
+        text: 'No se pudo eliminar el colaborador',
         icon: 'error',
         confirmButtonColor: '#EF4444',
       });
@@ -128,14 +170,14 @@ export function StaffList() {
   };
 
   const columns = [
-    { header: 'Nombre', accessor: 'name' as keyof Staff },
-    { header: 'ID Personal', accessor: 'id_personal' as keyof Staff },
-    { header: 'Teléfono', accessor: 'phone' as keyof Staff },
-    { header: 'Usuario', accessor: 'username' as keyof Staff },
-    { header: 'Tipo', accessor: 'userType' as keyof Staff },
+    { header: "Nombre", accessor: "name" as keyof Staff },
+    { header: "ID Personal", accessor: "id_personal" as keyof Staff },
+    { header: "Teléfono", accessor: "phone" as keyof Staff },
+    { header: "Usuario", accessor: "username" as keyof Staff },
+    { header: "Tipo", accessor: "userType" as keyof Staff },
     {
-      header: 'Estado',
-      accessor: 'isActive' as keyof Staff,
+      header: "Estado",
+      accessor: "isActive" as keyof Staff,
       render: (value: boolean, item: Staff) => (
         <StatusToggle
           isActive={value}
@@ -191,6 +233,7 @@ export function StaffList() {
                 setSelectedStaff(staff);
                 setShowEditModal(true);
               }}
+              onDelete={handleDelete}
             />
             <Pagination
               currentPage={currentPage}

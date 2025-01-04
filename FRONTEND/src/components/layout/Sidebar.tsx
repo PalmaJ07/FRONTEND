@@ -1,0 +1,74 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { Home, Users, Package, ShoppingCart, Settings } from 'lucide-react';
+
+const menuItems = [
+  { icon: Home, label: 'Inicio', path: '/index' },
+  {
+    icon: Users,
+    label: 'Usuarios',
+    subItems: [
+      { label: 'Colaboradores', path: '/index/users/staff' },
+      { label: 'Clientes', path: '/index/users/clients' }
+    ]
+  },
+  { icon: Package, label: 'Inventario', path: '/index/inventory' },
+  { icon: ShoppingCart, label: 'Ventas', path: '/index/sales' },
+  { icon: Settings, label: 'Configuraciones', path: '/index/settings' }
+];
+
+export function Sidebar() {
+  const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
+
+  return (
+    <aside className="bg-gray-800 text-white w-64 min-h-screen p-4">
+      <div className="text-xl font-bold mb-8 pl-4">Mi Dashboard</div>
+      <nav>
+        {menuItems.map((item) => (
+          <div key={item.label} className="mb-2">
+            {item.subItems ? (
+              <div>
+                <button
+                  onClick={() => setExpandedItem(expandedItem === item.label ? null : item.label)}
+                  className="flex items-center w-full p-3 rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  <item.icon className="h-5 w-5 mr-3" />
+                  <span>{item.label}</span>
+                </button>
+                {expandedItem === item.label && (
+                  <div className="ml-8 mt-2 space-y-2">
+                    {item.subItems.map((subItem) => (
+                      <NavLink
+                        key={subItem.path}
+                        to={subItem.path}
+                        className={({ isActive }) =>
+                          `block p-2 rounded-lg hover:bg-gray-700 transition-colors ${
+                            isActive ? 'bg-gray-700' : ''
+                          }`
+                        }
+                      >
+                        {subItem.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <NavLink
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${
+                    isActive ? 'bg-gray-700' : ''
+                  }`
+                }
+              >
+                <item.icon className="h-5 w-5 mr-3" />
+                <span>{item.label}</span>
+              </NavLink>
+            )}
+          </div>
+        ))}
+      </nav>
+    </aside>
+  );
+}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
   onSubmit: (username: string, password: string) => void;
@@ -9,6 +9,7 @@ interface LoginFormProps {
 export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,15 +51,20 @@ export function LoginForm({ onSubmit, isLoading = false }: LoginFormProps) {
               <Lock className="h-5 w-5 text-gray-400" />
             </div>
             <input
-              id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm"
               placeholder="Ingrese su contraseña"
               required
-              disabled={isLoading}
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)} //Seteo
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
           </div>
         </div>
 

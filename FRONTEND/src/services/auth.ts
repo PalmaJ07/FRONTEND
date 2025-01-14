@@ -32,3 +32,13 @@ export const login = async (username: string, password: string): Promise<boolean
     throw error;
   }
 };
+
+export const logout = async (): Promise<void> => {
+  try {
+    await api.post('/api/user/logout/');
+    localStorage.removeItem('jwt');
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
+};

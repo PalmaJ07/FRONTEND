@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { User, LogOut, UserCircle, ArrowLeft } from 'lucide-react';
 import { ProfileModal } from '../modals/ProfileModal';
 import { useProfile } from '../../hooks/useProfile';
+import { logout } from '../../services/auth';
+import Swal from 'sweetalert2';
 
 export function Navbar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -14,6 +16,28 @@ export function Navbar() {
   const handleProfileClick = () => {
     setShowUserMenu(false);
     setShowProfileModal(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+      await Swal.fire({
+        title: 'Sesión cerrada',
+        text: 'Has cerrado sesión exitosamente',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo cerrar la sesión',
+        icon: 'error',
+        confirmButtonColor: '#EF4444',
+      });
+    }
   };
 
   // Only show back button if we're not at the dashboard root
@@ -55,7 +79,7 @@ export function Navbar() {
                     Perfil
                   </button>
                   <button
-                    onClick={() => {/* Implementar cierre de sesión */}}
+                    onClick={handleLogout}
                     className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
                   >
                     <LogOut className="h-4 w-4 mr-2" />

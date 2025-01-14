@@ -12,6 +12,8 @@ import { PresentationsPage } from './components/settings/PresentationsPage';
 import { UnitsPage } from './components/settings/UnitsPage';
 import { SuppliersPage } from './components/settings/SuppliersPage';
 import { RolesPage } from './components/settings/RolesPage';
+import { ProductsPage } from './components/settings/ProductsPage';
+import { ReportsPage } from './pages/reports/ReportsPage';
 
 function App() {
   return (
@@ -30,6 +32,8 @@ function App() {
           <Route path="settings/unidades" element={<UnitsPage />} />
           <Route path="settings/proveedores" element={<SuppliersPage />} />
           <Route path="settings/roles" element={<RolesPage />} />
+          <Route path="settings/productos" element={<ProductsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="inventory" element={<div>Inventario</div>} />
           <Route path="sales" element={<div>Ventas</div>} />
         </Route>

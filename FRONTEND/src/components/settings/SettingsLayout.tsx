@@ -1,3 +1,4 @@
+//import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Store, 
@@ -6,7 +7,8 @@ import {
   Package, 
   Scale, 
   Truck, 
-  ShieldCheck 
+  ShieldCheck,
+  Box
 } from 'lucide-react';
 import { SettingsCard } from './SettingsCard';
 
@@ -52,6 +54,12 @@ const menuItems = [
     title: 'Roles',
     description: 'Configura los roles y permisos',
     icon: ShieldCheck 
+  },
+  { 
+    path: '/index/settings/productos', 
+    title: 'Productos',
+    description: 'Gestiona los productos del sistema',
+    icon: Box 
   },
 ];
 

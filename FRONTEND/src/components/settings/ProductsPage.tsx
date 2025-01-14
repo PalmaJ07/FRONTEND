@@ -5,13 +5,13 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { Table } from '../../components/common/Table';
 import { Pagination } from '../../components/common/Pagination';
 import { SearchBar } from '../../components/common/SearchBar';
-import { SupplierModal } from '../../components/suppliers/SupplierModal';
-import { Supplier, SupplierFormData } from '../../types/suppliers';
-import { supplierService } from '../../services/suppliers';
+import { ProductModal } from '../../components/products/ProductModal';
+import { Product, ProductFormData } from '../../types/products';
+import { productService } from '../../services/products';
 import { useDebounce } from '../../hooks/useDebounce';
 
-export function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+export function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -20,26 +20,26 @@ export function SuppliersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   useEffect(() => {
-    loadSuppliers();
+    loadProducts();
   }, [currentPage, pageSize, debouncedSearch]);
 
-  const loadSuppliers = async () => {
+  const loadProducts = async () => {
     try {
       setIsLoading(true);
-      const data = await supplierService.getList(currentPage, pageSize, debouncedSearch);
-      setSuppliers(data.items);
+      const data = await productService.getList(currentPage, pageSize, debouncedSearch);
+      setProducts(data.items);
       setTotalPages(data.totalPages);
       setTotalItems(data.totalItems);
     } catch (error) {
-      console.error('Error loading suppliers:', error);
+      console.error('Error loading products:', error);
       Swal.fire({
         title: 'Error',
-        text: 'No se pudo cargar la lista de proveedores',
+        text: 'No se pudo cargar la lista de productos',
         icon: 'error',
         confirmButtonColor: '#EF4444',
       });
@@ -48,65 +48,65 @@ export function SuppliersPage() {
     }
   };
 
-  const handleCreate = async (data: SupplierFormData) => {
+  const handleCreate = async (data: ProductFormData) => {
     try {
-      await supplierService.create(data);
-      await loadSuppliers();
+      await productService.create(data);
+      await loadProducts();
       setShowAddModal(false);
       await Swal.fire({
         title: 'Éxito',
-        text: 'Proveedor creado exitosamente',
+        text: 'Producto creado exitosamente',
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
       });
     } catch (error) {
-      console.error('Error creating supplier:', error);
+      console.error('Error creating product:', error);
       await Swal.fire({
         title: 'Error',
-        text: 'No se pudo crear el proveedor',
+        text: 'No se pudo crear el producto',
         icon: 'error',
         confirmButtonColor: '#EF4444',
       });
     }
   };
 
-  const handleEdit = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
     setShowEditModal(true);
   };
 
-  const handleUpdate = async (data: SupplierFormData) => {
-    if (!selectedSupplier) return;
+  const handleUpdate = async (data: ProductFormData) => {
+    if (!selectedProduct) return;
 
     try {
-      await supplierService.update(selectedSupplier.id, data);
-      await loadSuppliers();
+      await productService.update(selectedProduct.id, data);
+      await loadProducts();
       setShowEditModal(false);
-      setSelectedSupplier(null);
+      setSelectedProduct(null);
       await Swal.fire({
         title: 'Éxito',
-        text: 'Proveedor actualizado exitosamente',
+        text: 'Producto actualizado exitosamente',
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
       });
     } catch (error) {
-      console.error('Error updating supplier:', error);
+      console.error('Error updating product:', error);
       await Swal.fire({
         title: 'Error',
-        text: 'No se pudo actualizar el proveedor',
+        text: 'No se pudo actualizar el producto',
         icon: 'error',
         confirmButtonColor: '#EF4444',
       });
     }
   };
 
-  const handleDelete = async (supplier: Supplier) => {
+  const handleDelete = async (product: Product) => {
     try {
       const result = await Swal.fire({
-        title: '¿Eliminar proveedor?',
-        text: `¿Estás seguro de que deseas eliminar a ${supplier.supplierName}?`,
+        title: '¿Eliminar producto?',
+        text: `¿Estás seguro de que deseas eliminar el producto ${product.description}?`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#EF4444',
@@ -116,22 +116,22 @@ export function SuppliersPage() {
       });
 
       if (result.isConfirmed) {
-        await supplierService.delete(supplier.id);
-        await loadSuppliers();
+        await productService.delete(product.id);
+        await loadProducts();
         
         await Swal.fire({
           title: 'Eliminado',
-          text: 'El proveedor ha sido eliminado exitosamente',
+          text: 'El producto ha sido eliminado exitosamente',
           icon: 'success',
           timer: 1500,
           showConfirmButton: false
         });
       }
     } catch (error) {
-      console.error('Error deleting supplier:', error);
+      console.error('Error deleting product:', error);
       await Swal.fire({
         title: 'Error',
-        text: 'No se pudo eliminar el proveedor',
+        text: 'No se pudo eliminar el producto',
         icon: 'error',
         confirmButtonColor: '#EF4444',
       });
@@ -139,25 +139,25 @@ export function SuppliersPage() {
   };
 
   const columns = [
-    { header: 'Nombre', accessor: 'supplierName' as keyof Supplier },
-    { header: 'Teléfono', accessor: 'phone' as keyof Supplier },
-    { header: 'Encargado', accessor: 'manager' as keyof Supplier },
-    { header: 'Teléfono Encargado', accessor: 'managerPhone' as keyof Supplier },
+    { header: 'Código', accessor: 'code' as keyof Product },
+    { header: 'Descripción', accessor: 'description' as keyof Product },
+    { header: 'Categoría ID', accessor: 'categoryId' as keyof Product },
+    { header: 'Marca ID', accessor: 'brandId' as keyof Product },
   ];
 
   return (
     <div className="p-6">
-      <PageHeader title="Gestión de Proveedores" />
+      <PageHeader title="Gestión de Productos" />
       
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Proveedores</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Agregar Proveedor
+            Agregar Producto
           </button>
         </div>
 
@@ -165,7 +165,7 @@ export function SuppliersPage() {
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
-            placeholder="Buscar proveedor..."
+            placeholder="Buscar producto..."
           />
         </div>
 
@@ -175,7 +175,7 @@ export function SuppliersPage() {
           ) : (
             <>
               <Table
-                data={suppliers}
+                data={products}
                 columns={columns}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
@@ -193,23 +193,23 @@ export function SuppliersPage() {
           )}
         </div>
 
-        <SupplierModal
+        <ProductModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSubmit={handleCreate}
-          title="Agregar Proveedor"
+          title="Agregar Producto"
         />
 
-        {selectedSupplier && (
-          <SupplierModal
+        {selectedProduct && (
+          <ProductModal
             isOpen={showEditModal}
             onClose={() => {
               setShowEditModal(false);
-              setSelectedSupplier(null);
+              setSelectedProduct(null);
             }}
             onSubmit={handleUpdate}
-            title="Editar Proveedor"
-            initialData={selectedSupplier}
+            title="Editar Producto"
+            initialData={selectedProduct}
             isEditing
           />
         )}

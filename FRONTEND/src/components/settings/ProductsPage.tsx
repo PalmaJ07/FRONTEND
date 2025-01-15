@@ -8,10 +8,16 @@ import { SearchBar } from '../../components/common/SearchBar';
 import { ProductModal } from '../../components/products/ProductModal';
 import { Product, ProductFormData } from '../../types/products';
 import { productService } from '../../services/products';
+import { categoryService } from '../../services/categories';
+import { brandService } from '../../services/brands';
 import { useDebounce } from '../../hooks/useDebounce';
+import { Category } from '../../types/categories';
+import { Brand } from '../../types/brands';
 
 export function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -23,6 +29,22 @@ export function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoriesData, brandsData] = await Promise.all([
+          categoryService.getAll(),
+          brandService.getAll()
+        ]);
+        setCategories(categoriesData);
+        setBrands(brandsData);
+      } catch (error) {
+        console.error('Error loading categories and brands:', error);
+      }
+    };
+    loadData();
+  }, []);
 
   useEffect(() => {
     loadProducts();
@@ -138,11 +160,29 @@ export function ProductsPage() {
     }
   };
 
+  const getCategoryName = (categoryId: number) => {
+    const category = categories.find(c => c.id === categoryId);
+    return category?.name || 'N/A';
+  };
+
+  const getBrandName = (brandId: number) => {
+    const brand = brands.find(b => b.id === brandId);
+    return brand?.name || 'N/A';
+  };
+
   const columns = [
     { header: 'Código', accessor: 'code' as keyof Product },
     { header: 'Descripción', accessor: 'description' as keyof Product },
-    { header: 'Categoría ID', accessor: 'categoryId' as keyof Product },
-    { header: 'Marca ID', accessor: 'brandId' as keyof Product },
+    { 
+      header: 'Categoría', 
+      accessor: 'categoryId' as keyof Product,
+      render: (value: string | number) => getCategoryName(Number(value))
+    },
+    { 
+      header: 'Marca', 
+      accessor: 'brandId' as keyof Product,
+      render: (value: string | number) => getBrandName(Number(value))
+    },
   ];
 
   return (

@@ -1,11 +1,11 @@
 export interface Category {
-    id: string;
+    id: number;
     name: string;
   }
   
   export interface CategoryResponse {
     config: {
-      encrypted_id: string;
+      encrypted_id: number;
       nombre: string;
     }[];
     total_pages: number;

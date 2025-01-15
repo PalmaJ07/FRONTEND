@@ -1,3 +1,4 @@
+//components/commmon/Table.tsx
 import { ReactNode } from 'react';
 import { Edit2, Trash2 } from 'lucide-react';
 

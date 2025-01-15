@@ -31,10 +31,11 @@ export function ProductForm({ onSubmit, onCancel, initialData, isEditing = false
           categoryService.getAll(),
           brandService.getAll()
         ]);
+        
         setCategories(categoriesData);
         setBrands(brandsData);
 
-        // Si estamos editando, actualizar los valores iniciales con los datos existentes
+        // Si estamos editando, asegurarnos de que los valores iniciales sean correctos
         if (isEditing && initialData) {
           setFormData(prev => ({
             ...prev,
@@ -54,10 +55,19 @@ export function ProductForm({ onSubmit, onCancel, initialData, isEditing = false
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: name.startsWith('config_') ? Number(value) : value,
-    }));
+    
+    if (name === 'config_categoria' || name === 'config_marca') {
+      const numValue = parseInt(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: numValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

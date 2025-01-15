@@ -1,3 +1,4 @@
+//services/products
 import { api } from './api';
 import { ApiProduct, Product, ProductFormData, ProductResponse } from '../types/products';
 

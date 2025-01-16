@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreateProductDetailData } from '../../types/inventory';
+import { CreateProductDetailData, ProductDetail } from '../../types/inventory';
 import { Product } from '../../types/products';
 import { productService } from '../../services/products';
 import { supplierService } from '../../services/suppliers';
@@ -11,24 +11,26 @@ const presentationsService = createConfigService('presentacion');
 interface ProductDetailFormProps {
   onSubmit: (data: CreateProductDetailData) => Promise<void>;
   onCancel: () => void;
+  initialData?: ProductDetail;
+  isEditing?: boolean;
 }
 
-export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps) {
+export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing = false }: ProductDetailFormProps) {
   const [formData, setFormData] = useState<CreateProductDetailData>({
-    producto: -1,
-    config_unidad_medida: -1,
-    peso: 0,
-    config_presentacion_producto: -1,
-    unidades_por_presentacion: 0,
-    precio_venta_presentacion: 0,
-    precio_venta_unidades: 0,
-    proveedor: -1,
+    producto: initialData?.producto || -1,
+    config_unidad_medida: initialData?.config_unidad_medida || -1,
+    peso: initialData?.peso || 0,
+    config_presentacion_producto: initialData?.config_presentacion_producto || -1,
+    unidades_por_presentacion: initialData?.unidades_por_presentacion || 0,
+    precio_venta_presentacion: initialData?.precio_venta_presentacion || 0,
+    precio_venta_unidades: initialData?.precio_venta_unidades || 0,
+    proveedor: initialData?.proveedor || -1,
   });
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [units, setUnits] = useState<any[]>([]);
-  const [presentations, setPresentations] = useState<any[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
+  const [presentations, setPresentations] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; supplierName: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -241,7 +243,7 @@ export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
         >
-          Crear
+          {isEditing ? 'Actualizar' : 'Crear'}
         </button>
       </div>
     </form>

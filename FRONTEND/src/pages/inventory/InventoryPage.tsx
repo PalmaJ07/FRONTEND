@@ -20,9 +20,9 @@ const presentationsService = createConfigService('presentacion');
 export function InventoryPage() {
   const [details, setDetails] = useState<ProductDetail[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [units, setUnits] = useState<any[]>([]);
-  const [presentations, setPresentations] = useState<any[]>([]);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
+  const [presentations, setPresentations] = useState<{ id: string; name: string }[]>([]);
+  const [suppliers, setSuppliers] = useState<{ id: string; supplierName: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -30,11 +30,13 @@ export function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<ProductDetail | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadReferenceData = async () => {
       try {
         const [productsData, unitsData, presentationsData, suppliersData] = await Promise.all([
           productService.getList(1, 100),
@@ -51,7 +53,7 @@ export function InventoryPage() {
         console.error('Error loading reference data:', error);
       }
     };
-    loadData();
+    loadReferenceData();
   }, []);
 
   useEffect(() => {
@@ -101,23 +103,90 @@ export function InventoryPage() {
     }
   };
 
+  const handleEdit = (detail: ProductDetail) => {
+    setSelectedDetail(detail);
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async (data: CreateProductDetailData) => {
+    if (!selectedDetail) return;
+
+    try {
+      await inventoryService.update(selectedDetail.id, data);
+      await loadDetails();
+      setShowEditModal(false);
+      setSelectedDetail(null);
+      await Swal.fire({
+        title: 'Éxito',
+        text: 'Detalle actualizado exitosamente',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error updating detail:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo actualizar el detalle',
+        icon: 'error',
+        confirmButtonColor: '#EF4444',
+      });
+    }
+  };
+
+  const handleDelete = async (detail: ProductDetail) => {
+    try {
+      const result = await Swal.fire({
+        title: '¿Eliminar detalle?',
+        text: `¿Estás seguro de que deseas eliminar este detalle de producto?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (result.isConfirmed) {
+        await inventoryService.delete(detail.id);
+        await loadDetails();
+        
+        await Swal.fire({
+          title: 'Eliminado',
+          text: 'El detalle ha sido eliminado exitosamente',
+          icon: 'success',
+          timer: 1500,
+          showConfirmButton: false
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting detail:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo eliminar el detalle',
+        icon: 'error',
+        confirmButtonColor: '#EF4444',
+      });
+    }
+  };
+
   const getProductName = (productId: number) => {
-    const product = products.find(p => p.id === productId.toString());
+    const product = products.find(p => parseInt(atob(p.id)) === productId);
     return product?.description || 'N/A';
   };
 
   const getUnitName = (unitId: number) => {
-    const unit = units.find(u => u.id === unitId.toString());
+    const unit = units.find(u => parseInt(atob(u.id)) === unitId);
     return unit?.name || 'N/A';
   };
 
   const getPresentationName = (presentationId: number) => {
-    const presentation = presentations.find(p => p.id === presentationId.toString());
+    const presentation = presentations.find(p => parseInt(atob(p.id)) === presentationId);
     return presentation?.name || 'N/A';
   };
 
   const getSupplierName = (supplierId: number) => {
-    const supplier = suppliers.find(s => s.id === supplierId.toString());
+    const supplier = suppliers.find(s => parseInt(atob(s.id)) === supplierId);
     return supplier?.supplierName || 'N/A';
   };
 
@@ -217,8 +286,8 @@ export function InventoryPage() {
               <Table
                 data={details}
                 columns={columns}
-                onEdit={() => {}}
-                onDelete={() => {}}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
               />
               <Pagination
                 currentPage={currentPage}
@@ -239,6 +308,20 @@ export function InventoryPage() {
           onSubmit={handleCreate}
           title="Agregar Detalle de Producto"
         />
+
+        {selectedDetail && (
+          <ProductDetailModal
+            isOpen={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedDetail(null);
+            }}
+            onSubmit={handleUpdate}
+            title="Editar Detalle de Producto"
+            initialData={selectedDetail}
+            isEditing
+          />
+        )}
       </div>
     </div>
   );

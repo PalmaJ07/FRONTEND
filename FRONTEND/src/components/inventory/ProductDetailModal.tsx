@@ -1,13 +1,14 @@
-import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetailForm } from './ProductDetailForm';
-import { CreateProductDetailData } from '../../types/inventory';
+import { CreateProductDetailData, ProductDetail } from '../../types/inventory';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreateProductDetailData) => Promise<void>;
   title: string;
+  initialData?: ProductDetail;
+  isEditing?: boolean;
 }
 
 export function ProductDetailModal({ 
@@ -15,6 +16,8 @@ export function ProductDetailModal({
   onClose, 
   onSubmit, 
   title,
+  initialData,
+  isEditing = false
 }: ProductDetailModalProps) {
   if (!isOpen) return null;
 
@@ -35,6 +38,8 @@ export function ProductDetailModal({
           <ProductDetailForm 
             onSubmit={onSubmit}
             onCancel={onClose}
+            initialData={initialData}
+            isEditing={isEditing}
           />
         </div>
       </div>

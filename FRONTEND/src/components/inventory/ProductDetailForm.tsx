@@ -96,7 +96,7 @@ export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps
         >
           <option value="-1">Seleccione</option>
           {products.map(product => (
-            <option key={product.id} value={product.id}>
+            <option key={product.id} value={parseInt(atob(product.id))}>
               {product.description}
             </option>
           ))}
@@ -117,7 +117,7 @@ export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps
         >
           <option value="-1">Seleccione</option>
           {units.map(unit => (
-            <option key={unit.id} value={unit.id}>
+            <option key={unit.id} value={parseInt(atob(unit.id))}>
               {unit.name}
             </option>
           ))}
@@ -154,7 +154,7 @@ export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps
         >
           <option value="-1">Seleccione</option>
           {presentations.map(presentation => (
-            <option key={presentation.id} value={presentation.id}>
+            <option key={presentation.id} value={parseInt(atob(presentation.id))}>
               {presentation.name}
             </option>
           ))}
@@ -222,7 +222,7 @@ export function ProductDetailForm({ onSubmit, onCancel }: ProductDetailFormProps
         >
           <option value="-1">Seleccione</option>
           {suppliers.map(supplier => (
-            <option key={supplier.id} value={supplier.id}>
+            <option key={supplier.id} value={parseInt(atob(supplier.id))}>
               {supplier.supplierName}
             </option>
           ))}

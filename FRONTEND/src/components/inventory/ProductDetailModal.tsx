@@ -1,4 +1,4 @@
-//import React from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import { ProductDetailForm } from './ProductDetailForm';
 import { CreateProductDetailData } from '../../types/inventory';

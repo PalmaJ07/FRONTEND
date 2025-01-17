@@ -79,3 +79,43 @@ export interface UpdateProductDetailData {
   fecha_expiracion: string;
   almacen: number;
 }
+
+export interface CreateProductMovementData {
+  producto_detalle_origen: string;
+  producto_detalle_destino: string;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  precio_compra_presentacion: number;
+  precio_compra_unidades: number;
+  fecha: string;
+  fecha_expiracion: string;
+}
+
+export interface ProductMovement {
+  id: string;
+  producto_detalle_origen: string;
+  producto_detalle_destino: string;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  precio_compra_presentacion: number;
+  precio_compra_unidades: number;
+  fecha: string;
+  fecha_expiracion: string;
+}
+
+export interface CreateProductReturnData {
+  producto_detalle: string;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  fecha: string;
+  fecha_expiracion: string;
+}
+
+export interface ProductReturn {
+  id: string;
+  producto_detalle: string;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  fecha: string;
+  fecha_expiracion: string;
+}

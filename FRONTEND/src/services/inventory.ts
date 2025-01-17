@@ -5,7 +5,9 @@ import {
   CreateProductDetailData,
   ProductDetailResponse,
   CreateProductDetailEntryData,
-  UpdateProductDetailData
+  UpdateProductDetailData,
+  CreateProductMovementData,
+  CreateProductReturnData
 } from '../types/inventory';
 
 const mapApiProductDetailToProductDetail = (apiDetail: ApiProductDetail): ProductDetail => ({
@@ -64,7 +66,6 @@ export const inventoryService = {
     await api.delete(`/api/inv/productoDetalle/delete/${id}/`);
   },
 
-  // Nuevos métodos para ProductoDetalleIngreso
   createEntry: async (data: CreateProductDetailEntryData): Promise<void> => {
     await api.post('/api/inv/productoIngreso/create/', data);
   },
@@ -94,4 +95,12 @@ export const inventoryService = {
   deleteEntry: async (id: string): Promise<void> => {
     await api.delete(`/api/inv/productoIngreso/delete/${id}/`);
   },
+
+  createMovement: async (data: CreateProductMovementData): Promise<void> => {
+    await api.post('/api/inv/movimientoproducto/create/', data);
+  },
+
+  createReturn: async (data: CreateProductReturnData): Promise<void> => {
+    await api.post('/api/inv/devolucionProducto/create/', data);
+  }
 };

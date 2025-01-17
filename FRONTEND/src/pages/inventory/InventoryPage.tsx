@@ -6,7 +6,8 @@ import { Table } from '../../components/common/Table';
 import { Pagination } from '../../components/common/Pagination';
 import { SearchBar } from '../../components/common/SearchBar';
 import { ProductDetailModal } from '../../components/inventory/ProductDetailModal';
-import { ProductDetail, CreateProductDetailData } from '../../types/inventory';
+import { ProductEntryModal } from '../../components/inventory/ProductEntryModal';
+import { ProductDetail, CreateProductDetailData, CreateProductDetailEntryData } from '../../types/inventory';
 import { inventoryService } from '../../services/inventory';
 import { useDebounce } from '../../hooks/useDebounce';
 import { Product } from '../../types/products';
@@ -31,6 +32,7 @@ export function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showEntryModal, setShowEntryModal] = useState(false);
   const [selectedDetail, setSelectedDetail] = useState<ProductDetail | null>(null);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
@@ -170,6 +172,29 @@ export function InventoryPage() {
     }
   };
 
+  const handleCreateEntry = async (data: CreateProductDetailEntryData) => {
+    try {
+      await inventoryService.createEntry(data);
+      await loadDetails();
+      setShowEntryModal(false);
+      await Swal.fire({
+        title: 'Éxito',
+        text: 'Producto ingresado exitosamente',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error creating entry:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo ingresar el producto',
+        icon: 'error',
+        confirmButtonColor: '#EF4444',
+      });
+    }
+  };
+
   const getProductName = (productId: number) => {
     const product = products.find(p => parseInt(atob(p.id)) === productId);
     return product?.description || 'N/A';
@@ -261,7 +286,7 @@ export function InventoryPage() {
               Crear detalle
             </button>
             <button
-              onClick={() => {}}
+              onClick={() => setShowEntryModal(true)}
               className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700"
             >
               <PackagePlus className="h-5 w-5 mr-2" />
@@ -322,6 +347,13 @@ export function InventoryPage() {
             isEditing
           />
         )}
+
+        <ProductEntryModal
+          isOpen={showEntryModal}
+          onClose={() => setShowEntryModal(false)}
+          onSubmit={handleCreateEntry}
+          title="Ingresar Producto"
+        />
       </div>
     </div>
   );

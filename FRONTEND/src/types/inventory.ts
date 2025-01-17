@@ -1,3 +1,5 @@
+import { PaginatedResponse } from './api';
+
 export interface ProductDetail {
   id: string;
   producto: number;
@@ -41,10 +43,39 @@ export interface CreateProductDetailData {
   proveedor: number;
 }
 
-export interface ProductDetailResponse {
+export interface ProductDetailResponse extends PaginatedResponse<ApiProductDetail> {
   config: ApiProductDetail[];
-  total_pages: number;
-  current_page: number;
-  page_size: number;
   total_config: number;
+}
+
+export interface ProductDetailEntry {
+  id: string;
+  producto: number;
+  producto_detalle: string;
+  config_almacen: number;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  precio_compra_presentacion: number;
+  precio_compra_unidades: number;
+  fecha_expiracion: string;
+  fecha_ingreso: string;
+}
+
+export interface CreateProductDetailEntryData {
+  producto: number;
+  producto_detalle: string;
+  config_almacen: number;
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  precio_compra_presentacion: number;
+  precio_compra_unidades: number;
+  fecha_expiracion: string;
+  fecha_ingreso: string;
+}
+
+export interface UpdateProductDetailData {
+  cantidad_por_presentacion: number;
+  unidades_por_presentacion: number;
+  fecha_expiracion: string;
+  almacen: number;
 }

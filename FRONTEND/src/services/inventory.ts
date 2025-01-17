@@ -2,8 +2,10 @@ import { api } from './api';
 import { 
   ApiProductDetail, 
   ProductDetail, 
-  CreateProductDetailData, 
-  ProductDetailResponse 
+  CreateProductDetailData,
+  ProductDetailResponse,
+  CreateProductDetailEntryData,
+  UpdateProductDetailData
 } from '../types/inventory';
 
 const mapApiProductDetailToProductDetail = (apiDetail: ApiProductDetail): ProductDetail => ({
@@ -54,11 +56,42 @@ export const inventoryService = {
     await api.post('/api/inv/productoDetalle/create/', data);
   },
 
-  update: async (id: string, data: Partial<CreateProductDetailData>): Promise<void> => {
+  update: async (id: string, data: Partial<CreateProductDetailData | UpdateProductDetailData>): Promise<void> => {
     await api.patch(`/api/inv/productoDetalle/update/${id}/`, data);
   },
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/api/inv/productoDetalle/delete/${id}/`);
+  },
+
+  // Nuevos métodos para ProductoDetalleIngreso
+  createEntry: async (data: CreateProductDetailEntryData): Promise<void> => {
+    await api.post('/api/inv/productoIngreso/create/', data);
+  },
+
+  updateEntry: async (id: string, data: Partial<CreateProductDetailEntryData>): Promise<void> => {
+    await api.patch(`/api/inv/productoIngreso/update/${id}/`, data);
+  },
+
+  getEntryList: async (
+    page: number = 1,
+    pageSize: number = 10,
+    search?: string
+  ) => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      page_size: pageSize.toString(),
+    });
+
+    if (search) {
+      params.append('search', search);
+    }
+
+    const response = await api.get(`/api/inv/productoIngreso/index/?${params.toString()}`);
+    return response.data;
+  },
+
+  deleteEntry: async (id: string): Promise<void> => {
+    await api.delete(`/api/inv/productoIngreso/delete/${id}/`);
   },
 };

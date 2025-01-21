@@ -15,7 +15,7 @@ import { RolesPage } from './components/settings/RolesPage';
 import { ProductsPage } from './components/settings/ProductsPage';
 import { ReportsPage } from './pages/reports/ReportsPage';
 import { InventoryPage } from './pages/inventory/InventoryPage'
-
+import { SalesPage } from './pages/sales/SalesPage';
 
 function App() {
   return (
@@ -37,7 +37,7 @@ function App() {
           <Route path="settings/productos" element={<ProductsPage />} />
           <Route path="reports" element={<ReportsPage />} />
           <Route path="inventory" element={<InventoryPage />} />
-          <Route path="sales" element={<div>Ventas</div>} />
+          <Route path="sales" element={<SalesPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

@@ -41,6 +41,7 @@ export interface CreateProductDetailData {
   precio_venta_presentacion: number;
   precio_venta_unidades: number;
   proveedor: number;
+  almacen: number;
 }
 
 export interface ProductDetailResponse extends PaginatedResponse<ApiProductDetail> {
@@ -89,6 +90,12 @@ export interface CreateProductMovementData {
   precio_compra_unidades: number;
   fecha: string;
   fecha_expiracion: string;
+}
+
+export interface ProductDetailWithPrices extends ProductDetail {
+  precio_compra_presentacion?: number;
+  precio_compra_unidades?: number;
+  fechas_expiracion?: string[];
 }
 
 export interface ProductMovement {

@@ -7,7 +7,7 @@ import { Pagination } from '../../components/common/Pagination';
 import { SearchBar } from '../../components/common/SearchBar';
 import { ProductDetailModal } from '../../components/inventory/ProductDetailModal';
 import { ProductEntryModal } from '../../components/inventory/ProductEntryModal';
-import { ProductMovementModal } from '../../components/inventory/productMovementModal';
+import { ProductMovementModal } from '../../components/inventory/ProductMovementModal';
 import { ProductReturnModal } from '../../components/inventory/ProductReturnModal';
 import { ProductDetail, CreateProductDetailData, CreateProductDetailEntryData, CreateProductMovementData, CreateProductReturnData } from '../../types/inventory';
 import { inventoryService } from '../../services/inventory';
@@ -19,6 +19,7 @@ import { createConfigService } from '../../services/config';
 
 const unitsService = createConfigService('unidad-medida');
 const presentationsService = createConfigService('presentacion');
+const storageService = createConfigService('almacen');
 
 export function InventoryPage() {
   const [details, setDetails] = useState<ProductDetail[]>([]);
@@ -26,6 +27,7 @@ export function InventoryPage() {
   const [units, setUnits] = useState<{ id: string; name: string }[]>([]);
   const [presentations, setPresentations] = useState<{ id: string; name: string }[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: string; supplierName: string }[]>([]);
+  const [storages, setStorages] = useState<{ id: string; name: string }[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -44,15 +46,17 @@ export function InventoryPage() {
   useEffect(() => {
     const loadReferenceData = async () => {
       try {
-        const [productsData, unitsData, presentationsData, suppliersData] = await Promise.all([
+        const [productsData, unitsData, storagesData, presentationsData, suppliersData] = await Promise.all([
           productService.getList(1, 100),
           unitsService.getList(1, 100),
+          storageService.getList(1, 100),
           presentationsService.getList(1, 100),
           supplierService.getList(1, 100),
         ]);
         
         setProducts(productsData.items);
         setUnits(unitsData.items);
+        setStorages(storagesData.items);
         setPresentations(presentationsData.items);
         setSuppliers(suppliersData.items);
       } catch (error) {
@@ -265,11 +269,22 @@ export function InventoryPage() {
     return supplier?.supplierName || 'N/A';
   };
 
+  const getStorageName = (storageId: number | null) => {
+    if (!storageId) return 'N/A';
+    const storage = storages.find(s => parseInt(atob(s.id)) === storageId);
+    return storage?.name || 'N/A';
+  };
+
   const columns = [
     { 
       header: 'Producto', 
       accessor: 'producto' as keyof ProductDetail,
       render: (value: number) => getProductName(value)
+    },
+    { 
+      header: 'Almacén', 
+      accessor: 'almacen' as keyof ProductDetail,
+      render: (value: number | null) => getStorageName(value)
     },
     { 
       header: 'Unidad de Medida', 

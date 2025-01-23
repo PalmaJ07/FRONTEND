@@ -8,6 +8,7 @@ import { inventoryService } from '../../services/inventory';
 import { createConfigService } from '../../services/config';
 
 const storageService = createConfigService('almacen');
+const unitsService = createConfigService('unidad-medida');
 
 interface ProductEntryFormProps {
   onSubmit: (data: CreateProductDetailEntryData) => Promise<void>;
@@ -36,6 +37,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
   });
 
   const [storage, setStorage] = useState<{ id: string; name: string }[]>([]);
+  const [units, setUnits] = useState<{ id: string; name: string; abbreviation: string }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productDetails, setProductDetails] = useState<ProductDetail[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -47,8 +49,12 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
   useEffect(() => {
     const loadStorage = async () => {
       try {
-        const response = await storageService.getList(1, 100);
-        setStorage(response.items);
+        const [storageResponse, unitsResponse] = await Promise.all([
+          storageService.getList(1, 100),
+          unitsService.getList(1, 100)
+        ]);
+        setStorage(storageResponse.items);
+        setUnits(unitsResponse.items);
       } catch (error) {
         console.error('Error loading storage:', error);
       }
@@ -203,6 +209,13 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
     return product?.description || '';
   };
 
+  const getUnitAbr = (unitId: number) => {
+    const unit = units.find(u => parseInt(atob(u.id)) === unitId);
+    return unit?.abbreviation || '';
+  };
+
+
+
   if (isLoading && !storage.length) {
     return <div className="text-center">Cargando...</div>;
   }
@@ -212,6 +225,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
       <div>
         <label htmlFor="config_almacen" className="block text-sm font-medium text-gray-700 mb-1">
           Almacén
+          <span className="text-red-500"> *</span>
         </label>
         <select
           id="config_almacen"
@@ -233,6 +247,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
       <div>
         <label htmlFor="producto" className="block text-sm font-medium text-gray-700 mb-1">
           Producto
+          <span className="text-red-500"> *</span>
         </label>
         <div className="relative">
           <div
@@ -263,7 +278,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
                   <div
                     key={product.id}
                     onClick={() => handleProductSelect(product.id)}
-                    className="px-3 py-2 hover:bg-gray-300 cursor-pointer"
+                    className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                   >
                     {product.description}
                   </div>
@@ -278,6 +293,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="producto_detalle" className="block text-sm font-medium text-gray-700 mb-1">
             Detalle de Producto
+            <span className="text-red-500"> *</span>
           </label>
           <select
             id="producto_detalle"
@@ -290,7 +306,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
             <option value="">Seleccione detalle de producto</option>
             {productDetails.map(detail => (
               <option key={detail.id} value={detail.id}>
-                {`${getProductName(detail.producto)} - ${detail.peso} kg`}
+                {`${getProductName(detail.producto)} - ${detail.peso} ${getUnitAbr(detail.config_unidad_medida)}`}
               </option>
             ))}
           </select>
@@ -300,7 +316,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="cantidad_por_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
-            Cantidad por Presentación
+            Cantidad por Presentación<span className="text-red-500"> *</span>
           </label>
           <input
             type="number"
@@ -317,6 +333,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="unidades_por_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
             Unidades por Presentación
+            <span className="text-red-500"> *</span>
           </label>
           <input
             type="number"
@@ -335,6 +352,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="precio_compra_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
             Precio Compra Presentación
+            <span className="text-red-500"> *</span>
           </label>
           <input
             type="number"
@@ -352,6 +370,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="precio_compra_unidades" className="block text-sm font-medium text-gray-700 mb-1">
             Precio Compra Unidades
+            <span className="text-red-500"> *</span>
           </label>
           <input
             type="number"
@@ -371,6 +390,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="fecha_expiracion" className="block text-sm font-medium text-gray-700 mb-1">
             Fecha de Expiración
+            <span className="text-red-500"> *</span>
           </label>
           <input
             type="date"
@@ -386,6 +406,7 @@ export function ProductEntryForm({ onSubmit, onCancel, initialData, isEditing = 
         <div>
           <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
             Fecha de Ingreso
+            <span className="text-red-500"> *</span>
           </label>
           <input
             type="date"

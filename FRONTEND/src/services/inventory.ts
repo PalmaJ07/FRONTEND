@@ -30,7 +30,9 @@ export const inventoryService = {
   getList: async (
     page: number = 1,
     pageSize: number = 10,
-    search?: string
+    search?: string,
+    almacen?: string,
+    producto?: string,
   ) => {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -39,6 +41,14 @@ export const inventoryService = {
 
     if (search) {
       params.append('search', search);
+    }
+
+    if (almacen !== undefined) {
+      params.append('almacen', almacen.toString());
+    }
+
+    if (producto !== undefined) {
+      params.append('producto', producto.toString());
     }
 
     const response = await api.get<ProductDetailResponse>(

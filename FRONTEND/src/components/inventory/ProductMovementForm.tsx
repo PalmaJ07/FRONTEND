@@ -24,19 +24,21 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
   };
 
   const [formData, setFormData] = useState<CreateProductMovementData>({
-    producto_detalle_origen: '',
-    producto_detalle_destino: '',
-    cantidad_por_presentacion: 0,
-    unidades_por_presentacion: 0,
-    precio_compra_presentacion: 0,
-    precio_compra_unidades: 0,
-    fecha: getCurrentDate(),
-    fecha_expiracion: ''
+    producto: '',
+    producto_detalle: '',
+    config_almacen: '',
+    cantidad_por_presentacion: '',
+    unidades_por_presentacion: '',
+    precio_compra_presentacion: '',
+    precio_compra_unidades: '',
+    fecha_expiracion: '',
+    fecha_ingreso: getCurrentDate(),
   });
 
   const [sourceStorage, setSourceStorage] = useState<string>('');
   const [destinationStorage, setDestinationStorage] = useState<string>('');
   const [selectedProduct, setSelectedProduct] = useState<string>('');
+  const [selectedProductDetail, setSelectedProductDetail] = useState<string>('');
   const [storage, setStorage] = useState<{ id: string; name: string }[]>([]);
   const [units, setUnits] = useState<{ id: string; name: string; abbreviation: string }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -161,9 +163,11 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
     const value = e.target.value;
     setSourceStorage(value);
     setSelectedProduct('');
+    setSelectedProductDetail('');
     setFormData(prev => ({
       ...prev,
-      producto_detalle_origen: '',
+      producto: '',
+      producto_detalle: '',
       fecha_expiracion: ''
     }));
   };
@@ -177,7 +181,7 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
     setDestinationStorage(value);
     setFormData(prev => ({
       ...prev,
-      producto_detalle_destino: parseInt(atob(value)).toString()
+      config_almacen: parseInt(atob(value)).toString()
     }));
   };
 
@@ -185,9 +189,11 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
     setSelectedProduct(productId);
     setShowProductSearch(false);
     setSearchTerm('');
+    setSelectedProductDetail('');
     setFormData(prev => ({
       ...prev,
-      producto_detalle_origen: '',
+      producto: parseInt(atob(productId)).toString(),
+      producto_detalle: '',
       fecha_expiracion: ''
     }));
   };
@@ -195,9 +201,10 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
   const handleProductDetailSelect = (detailId: string) => {
     const detail = productDetails.find(d => d.id === detailId);
     if (detail) {
+      setSelectedProductDetail(detailId);
       setFormData(prev => ({
         ...prev,
-        producto_detalle_origen: detailId,
+        producto_detalle: parseInt(atob(detailId)).toString(),
         precio_compra_presentacion: detail.precio_venta_presentacion,
         precio_compra_unidades: detail.precio_venta_unidades,
         unidades_por_presentacion: detail.unidades_por_presentacion
@@ -217,7 +224,7 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.producto_detalle_origen || !formData.producto_detalle_destino) {
+    if (!formData.producto_detalle || !formData.config_almacen) {
       alert('Por favor complete todos los campos requeridos');
       return;
     }
@@ -328,7 +335,7 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
           </label>
           <select
             id="producto_detalle"
-            value={formData.producto_detalle_origen}
+            value={selectedProductDetail}
             onChange={(e) => handleProductDetailSelect(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
@@ -395,8 +402,8 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
             type="number"
             id="unidades_por_presentacion"
             value={formData.unidades_por_presentacion}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-            readOnly
+            onChange={(e) => setFormData(prev => ({ ...prev, unidades_por_presentacion: parseFloat(e.target.value) }))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -455,14 +462,14 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
         </div>
 
         <div>
-          <label htmlFor="fecha" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
             Fecha de Movimiento
             <span className="text-red-500"> *</span>
           </label>
           <input
             type="date"
-            id="fecha"
-            value={formData.fecha}
+            id="fecha_ingreso"
+            value={formData.fecha_ingreso}
             className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
             readOnly
           />

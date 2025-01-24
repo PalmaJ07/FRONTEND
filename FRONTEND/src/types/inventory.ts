@@ -75,21 +75,22 @@ export interface CreateProductDetailEntryData {
 }
 
 export interface UpdateProductDetailData {
-  cantidad_por_presentacion: number;
-  unidades_por_presentacion: number;
+  cantidad_por_presentacion: string;
+  unidades_por_presentacion: string;
   fecha_expiracion: string;
   almacen: number;
 }
 
-export interface CreateProductMovementData {
-  producto_detalle_origen: string;
-  producto_detalle_destino: string;
-  cantidad_por_presentacion: number;
-  unidades_por_presentacion: number;
-  precio_compra_presentacion: number;
-  precio_compra_unidades: number;
-  fecha: string;
+export interface CreateProductMovementData {//Envio api movimiento.
+  producto: string;
+  producto_detalle: string;
+  config_almacen: string;
+  cantidad_por_presentacion: string;
+  unidades_por_presentacion: string;
+  precio_compra_presentacion: string;
+  precio_compra_unidades: string;
   fecha_expiracion: string;
+  fecha_ingreso: string;
 }
 
 export interface ProductDetailWithPrices extends ProductDetail {
@@ -102,9 +103,9 @@ export interface ProductMovement {
   id: string;
   producto_detalle_origen: string;
   producto_detalle_destino: string;
-  cantidad_por_presentacion: number;
-  unidades_por_presentacion: number;
-  precio_compra_presentacion: number;
+  cantidad_por_presentacion: string;
+  unidades_por_presentacion: string;
+  precio_compra_presentacion: string;
   precio_compra_unidades: number;
   fecha: string;
   fecha_expiracion: string;

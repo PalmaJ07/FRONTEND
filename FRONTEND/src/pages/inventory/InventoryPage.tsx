@@ -308,8 +308,16 @@ export function InventoryPage() {
       accessor: 'total_unidades' as keyof ProductDetail,
       render: (value: number | null) => value ?? 'N/A'
     },
-    { header: 'Precio Venta Presentación', accessor: 'precio_venta_presentacion' as keyof ProductDetail },
-    { header: 'Precio Venta Unidades', accessor: 'precio_venta_unidades' as keyof ProductDetail },
+    { 
+      header: 'Precio Venta Presentación', 
+      accessor: 'precio_venta_presentacion' as keyof ProductDetail,
+      render: (value: number) => value + ' C$' 
+    },
+    { 
+      header: 'Precio Venta Unidades', 
+      accessor: 'precio_venta_unidades' as keyof ProductDetail,
+      render: (value: number) => value + ' C$'
+    },
     { 
       header: 'Proveedor', 
       accessor: 'proveedor' as keyof ProductDetail,

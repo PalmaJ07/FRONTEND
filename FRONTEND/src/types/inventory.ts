@@ -3,6 +3,7 @@ import { PaginatedResponse } from './api';
 export interface ProductDetail {
   id: string;
   producto: number;
+  n_producto: string;
   config_unidad_medida: number;
   peso: number;
   config_presentacion_producto: number;
@@ -18,7 +19,9 @@ export interface ProductDetail {
 
 export interface ApiProductDetail {
   encrypted_id: string;
+  id: number;
   producto: number;
+  n_producto: string;
   config_unidad_medida: number;
   peso: number;
   config_presentacion_producto: number;

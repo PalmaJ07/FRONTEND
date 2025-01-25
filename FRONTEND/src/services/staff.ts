@@ -27,7 +27,8 @@ const mapApiStaffToStaff = (apiStaff: ApiStaff): Staff => ({
   phone: apiStaff.phone,
   username: apiStaff.username,
   userType: getUserType(apiStaff.user_type),
-  isActive: apiStaff.estado === 1
+  isActive: apiStaff.estado === 1,
+  almacen_asignado: apiStaff.almacen_asignado
 });
 
 export const getStaffList = async (

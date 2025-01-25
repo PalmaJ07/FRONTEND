@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Trash2, Users, Percent, DollarSign } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Users, Percent, DollarSign, Store } from 'lucide-react';
 import { ProductDetail } from '../../types/sales';
 import { searchProducts } from '../../services/sales';
 import { getClientList } from '../../services/clients';
 import { Client } from '../../types/clients';
 import { useDebounce } from '../../hooks/useDebounce';
+import { useProfile } from '../../hooks/useProfile';
+import { createConfigService } from '../../services/config';
+
+const storageService = createConfigService('almacen');
 
 type DiscountType = 'percentage' | 'amount' | 'none';
 
@@ -14,6 +18,7 @@ interface ProductWithDiscount extends ProductDetail {
 }
 
 export function SalesPage() {
+  const { profile, isLoading: isProfileLoading } = useProfile();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ProductDetail[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<ProductWithDiscount[]>([]);
@@ -24,9 +29,45 @@ export function SalesPage() {
   const [showClientSearch, setShowClientSearch] = useState(false);
   const [globalDiscountType, setGlobalDiscountType] = useState<DiscountType>('none');
   const [globalDiscountValue, setGlobalDiscountValue] = useState(0);
+  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
 
+  // Cargar almacenes
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      try {
+        const response = await storageService.getList(1, 100);
+        setWarehouses(response.items);
+      } catch (error) {
+        console.error('Error loading warehouses:', error);
+      }
+    };
+    loadWarehouses();
+  }, []);
+
+  // Establecer almacén inicial cuando se carga el perfil y los almacenes
+  useEffect(() => {
+    if (!isProfileLoading && profile?.almacen_asignado && warehouses.length > 0) {
+      const assignedWarehouse = warehouses.find(
+        w => parseInt(atob(w.id)) === profile.almacen_asignado
+      );
+      
+      if (assignedWarehouse) {
+        setSelectedWarehouse({
+          id: profile.almacen_asignado,
+          name: assignedWarehouse.name
+        });
+      }
+    }
+  }, [profile, warehouses, isProfileLoading]);
+
+  // Cargar clientes
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -39,16 +80,17 @@ export function SalesPage() {
     loadClients();
   }, []);
 
+  // Búsqueda de productos
   useEffect(() => {
     const performSearch = async () => {
-      if (!debouncedSearch) {
+      if (!debouncedSearch || !selectedWarehouse) {
         setSearchResults([]);
         return;
       }
 
       setIsLoading(true);
       try {
-        const results = await searchProducts(debouncedSearch);
+        const results = await searchProducts(debouncedSearch, selectedWarehouse.id);
         setSearchResults(results);
       } catch (error) {
         console.error('Error searching products:', error);
@@ -58,7 +100,33 @@ export function SalesPage() {
     };
 
     performSearch();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, selectedWarehouse]);
+
+  // Manejador de clic fuera del dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.search-container')) {
+        setShowSearchResults(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleWarehouseChange = (warehouseId: string) => {
+    const newWarehouse = warehouses.find(w => w.id === warehouseId);
+    if (newWarehouse) {
+      setSelectedWarehouse({
+        id: parseInt(atob(warehouseId)),
+        name: newWarehouse.name
+      });
+      setShowSearchResults(false);
+      setSearchTerm('');
+      setSearchResults([]);
+    }
+  };
 
   const handleProductSelect = (product: ProductDetail) => {
     if (!selectedProducts.some(p => p.encrypted_id === product.encrypted_id)) {
@@ -73,6 +141,7 @@ export function SalesPage() {
       }));
     }
     setSearchTerm('');
+    setShowSearchResults(false);
   };
 
   const handleRemoveProduct = (productId: string) => {
@@ -142,37 +211,56 @@ export function SalesPage() {
 
   return (
     <div className="p-6">
-      {/* Sección de búsqueda y resultados */}
-      <div className="mb-8">
-        <div className="relative mb-4">
+      <div className="max-w-[calc(100%-384px)] mb-6">
+        {/* Selector de almacén */}
+        <div className="flex items-center space-x-4 mb-4">
+          <div className="flex items-center space-x-2">
+            <Store className="h-5 w-5 text-gray-500" />
+            <span className="font-medium text-gray-700">
+              Almacén: {selectedWarehouse?.name}
+            </span>
+          </div>
+          <select
+            value=""
+            onChange={(e) => handleWarehouseChange(e.target.value)}
+            className="px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+          >
+            <option value="">Cambiar Almacén</option>
+            {warehouses.map(warehouse => (
+              <option key={warehouse.id} value={warehouse.id}>
+                {warehouse.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Barra de búsqueda */}
+        <div className="search-container relative">
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={() => setShowSearchResults(true)}
             placeholder="Buscar productos..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={!selectedWarehouse}
           />
-          <Search className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           
-          {/* Resultados de búsqueda en un dropdown */}
-          {searchTerm && !isLoading && searchResults.length > 0 && (
+          {/* Resultados de búsqueda */}
+          {showSearchResults && searchResults.length > 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg max-h-96 overflow-y-auto">
               {searchResults.map((product) => (
                 <div
                   key={product.encrypted_id}
                   onClick={() => handleProductSelect(product)}
-                  className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                  className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{product.n_producto}</p>
-                      <p className="text-sm text-gray-600">
-                        Stock: {product.total_unidades} unidades
-                      </p>
-                    </div>
-                    <p className="text-blue-600 font-medium">
-                      ${product.precio_venta_unidades}
-                    </p>
+                  <div className="grid grid-cols-4 gap-2 text-sm">
+                    <div className="font-medium">{product.n_producto}</div>
+                    <div>Stock: {product.total_unidades}</div>
+                    <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
+                    <div>Precio: ${product.precio_venta_unidades}</div>
                   </div>
                 </div>
               ))}
@@ -184,91 +272,95 @@ export function SalesPage() {
       <div className="grid grid-cols-12 gap-6">
         {/* Sección de productos seleccionados */}
         <div className="col-span-8">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Productos Seleccionados</h2>
+          <div className="bg-white rounded-lg shadow-lg">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-800">Productos Seleccionados</h2>
+            </div>
             
-            {selectedProducts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="h-12 w-12 mx-auto mb-2" />
-                <p>No hay productos seleccionados</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {selectedProducts.map((product) => (
-                  <div key={product.encrypted_id} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-lg">{product.n_producto}</h3>
-                        <p className="text-gray-600">
-                          Precio unitario: ${product.precio_venta_unidades}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveProduct(product.encrypted_id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Cantidad
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={quantities[product.encrypted_id] || 1}
-                          onChange={(e) => handleQuantityChange(product.encrypted_id, parseInt(e.target.value))}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        />
+            <div className="p-4">
+              {selectedProducts.length === 0 ? (
+                <div className="text-center py-6 text-gray-500">
+                  <ShoppingCart className="h-10 w-10 mx-auto mb-2" />
+                  <p>No hay productos seleccionados</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedProducts.map((product) => (
+                    <div key={product.encrypted_id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h3 className="font-medium">{product.n_producto}</h3>
+                          <p className="text-sm text-gray-600">
+                            Precio unitario: ${product.precio_venta_unidades}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveProduct(product.encrypted_id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
                       </div>
                       
-                      <div className="col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Descuento
-                        </label>
-                        <div className="flex space-x-2">
-                          <select
-                            value={product.discountType}
-                            onChange={(e) => handleProductDiscountChange(
-                              product.encrypted_id, 
-                              e.target.value as DiscountType,
-                              product.discountValue
-                            )}
-                            className="w-1/2 p-2 border border-gray-300 rounded"
-                          >
-                            <option value="none">Sin descuento</option>
-                            <option value="percentage">Porcentaje</option>
-                            <option value="amount">Monto</option>
-                          </select>
-                          {product.discountType !== 'none' && (
-                            <input
-                              type="number"
-                              min="0"
-                              value={product.discountValue}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Cantidad
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={quantities[product.encrypted_id] || 1}
+                            onChange={(e) => handleQuantityChange(product.encrypted_id, parseInt(e.target.value))}
+                            className="w-full p-1.5 text-sm border border-gray-300 rounded"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                            Descuento
+                          </label>
+                          <div className="flex space-x-2">
+                            <select
+                              value={product.discountType}
                               onChange={(e) => handleProductDiscountChange(
-                                product.encrypted_id,
-                                product.discountType,
-                                parseFloat(e.target.value)
+                                product.encrypted_id, 
+                                e.target.value as DiscountType,
+                                product.discountValue
                               )}
-                              className="w-1/2 p-2 border border-gray-300 rounded"
-                            />
-                          )}
+                              className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
+                            >
+                              <option value="none">Sin descuento</option>
+                              <option value="percentage">Porcentaje</option>
+                              <option value="amount">Monto</option>
+                            </select>
+                            {product.discountType !== 'none' && (
+                              <input
+                                type="number"
+                                min="0"
+                                value={product.discountValue}
+                                onChange={(e) => handleProductDiscountChange(
+                                  product.encrypted_id,
+                                  product.discountType,
+                                  parseFloat(e.target.value)
+                                )}
+                                className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
+                      
+                      <div className="text-right mt-2">
+                        <span className="text-sm font-medium">
+                          Subtotal: ${calculateProductTotal(product, quantities[product.encrypted_id] || 0).toFixed(2)}
+                        </span>
+                      </div>
                     </div>
-                    
-                    <div className="text-right mt-2">
-                      <span className="text-lg font-medium">
-                        Subtotal: ${calculateProductTotal(product, quantities[product.encrypted_id] || 0).toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

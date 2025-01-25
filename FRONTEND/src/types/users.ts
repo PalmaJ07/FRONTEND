@@ -8,6 +8,7 @@ export interface Staff {
   username: string;
   userType: UserType;
   isActive: boolean;
+  almacen_asignado: string | null;
 }
 
 export interface CreateStaffData {
@@ -18,6 +19,7 @@ export interface CreateStaffData {
   password: string;
   user_type: number;
   estado: number;
+  almacen_asignado: string | null;
 }
 
 export interface UserProfile {
@@ -26,6 +28,7 @@ export interface UserProfile {
   telefono: string;
   id_personal: string;
   user_type: string;
+  almacen_asignado: string;
 }
 
 export interface Client {

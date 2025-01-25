@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Staff, CreateStaffData } from '../../types/users';
+import { createConfigService } from '../../services/config';
+
+const storageService = createConfigService('almacen');
 
 interface StaffFormProps {
   onSubmit: (data: CreateStaffData | Partial<Staff>) => Promise<void>;
@@ -16,30 +19,53 @@ const USER_TYPES = [
 ];
 
 export function StaffForm({ onSubmit, onCancel, initialData, isEditing = false }: StaffFormProps) {
-  const [formData, setFormData] = useState(
-    initialData ? {
-      name: initialData.name,
-      id_personal: initialData.id_personal,
-      phone: initialData.phone,
-      username: initialData.username,
-      user_type: USER_TYPES.find(t => t.label === initialData.userType)?.value || 2,
-      ...(isEditing ? {} : { password: '', estado: 1 })
-    } : {
-      name: '',
-      id_personal: '',
-      phone: '',
-      username: '',
-      password: '',
-      user_type: 2,
-      estado: 1
+  const [formData, setFormData] = useState<CreateStaffData>({
+    name: '',
+    id_personal: '',
+    phone: '',
+    username: '',
+    password: '',
+    user_type: 2,
+    estado: 1,
+    almacen_asignado: null
+  });
+
+  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    // Load warehouses
+    const loadWarehouses = async () => {
+      try {
+        const response = await storageService.getList(1, 100);
+        setWarehouses(response.items);
+      } catch (error) {
+        console.error('Error loading warehouses:', error);
+      }
+    };
+    loadWarehouses();
+
+    // Set initial data if editing
+    if (initialData) {
+      setFormData({
+        name: initialData.name,
+        id_personal: initialData.id_personal,
+        phone: initialData.phone,
+        username: initialData.username,
+        user_type: USER_TYPES.find(t => t.label === initialData.userType)?.value || 2,
+        estado: initialData.isActive ? 1 : 0,
+        almacen_asignado: initialData.almacen_asignado,
+        password: '' // Password is not included when editing
+      });
     }
-  );
+  }, [initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'user_type' ? parseInt(value, 10) : value
+      [name]: ['user_type', 'almacen_asignado'].includes(name) 
+        ? value === '' ? null : parseInt(value, 10) 
+        : value
     }));
   };
 
@@ -147,17 +173,37 @@ export function StaffForm({ onSubmit, onCancel, initialData, isEditing = false }
         </select>
       </div>
 
+      <div>
+        <label htmlFor="almacen_asignado" className="block text-sm font-medium text-gray-700 mb-1">
+          Almacén Asignado
+        </label>
+        <select
+          id="almacen_asignado"
+          name="almacen_asignado"
+          value={formData.almacen_asignado || ''}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Sin almacén asignado</option>
+          {warehouses.map(warehouse => (
+            <option key={warehouse.id} value={parseInt(atob(warehouse.id))}>
+              {warehouse.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700"
         >
           {isEditing ? 'Actualizar' : 'Crear'}
         </button>

@@ -17,6 +17,9 @@ import {
   deleteStaff
 } from "../../services/staff";
 import { useDebounce } from "../../hooks/useDebounce";
+import { createConfigService } from "../../services/config";
+
+const storageService = createConfigService("almacen");
 
 export function StaffList() {
   const [staff, setStaff] = useState<Staff[]>([]);
@@ -31,8 +34,21 @@ export function StaffList() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      try {
+        const response = await storageService.getList(1, 100);
+        setWarehouses(response.items);
+      } catch (error) {
+        console.error('Error loading warehouses:', error);
+      }
+    };
+    loadWarehouses();
+  }, []);
 
   useEffect(() => {
     loadStaff();
@@ -169,12 +185,23 @@ export function StaffList() {
     }
   };
 
+  const getWarehouseName = (warehouseId: number | null) => {
+    if (!warehouseId) return 'Sin asignar';
+    const warehouse = warehouses.find(w => parseInt(atob(w.id)) === warehouseId);
+    return warehouse?.name || 'Sin asignar';
+  };
+
   const columns = [
     { header: "Nombre", accessor: "name" as keyof Staff },
     { header: "ID Personal", accessor: "id_personal" as keyof Staff },
     { header: "Teléfono", accessor: "phone" as keyof Staff },
     { header: "Usuario", accessor: "username" as keyof Staff },
     { header: "Tipo", accessor: "userType" as keyof Staff },
+    { 
+      header: 'Almacén', 
+      accessor: 'almacen_asignado' as keyof Staff,
+      render: (value: number | null) => getWarehouseName(value)
+    },
     {
       header: "Estado",
       accessor: "isActive" as keyof Staff,

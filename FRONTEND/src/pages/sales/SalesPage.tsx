@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Trash2, Users, Percent, DollarSign, Store } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ShoppingCart, Trash2, Percent, DollarSign, Store, UserPlus } from 'lucide-react';
 import { ProductDetail } from '../../types/sales';
 import { searchProducts } from '../../services/sales';
 import { getClientList } from '../../services/clients';
@@ -18,67 +19,162 @@ interface ProductWithDiscount extends ProductDetail {
 }
 
 export function SalesPage() {
+  const navigate = useNavigate();
   const { profile, isLoading: isProfileLoading } = useProfile();
+  
+  // Estados para la búsqueda y selección de productos
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<ProductDetail[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<ProductWithDiscount[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState('');
-  const [showClientSearch, setShowClientSearch] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  // Agregar estado para el índice seleccionado con teclado
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+
+
+  // Estados para el manejo de almacenes
+  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: number; name: string } | null>(null);
+
+  // Estados para el manejo de clientes
+  const [clientName, setClientName] = useState('');
+  const [isExistingClient, setIsExistingClient] = useState(false);
+  const [showClientResults, setShowClientResults] = useState(false);
+  const [clientSearchResults, setClientSearchResults] = useState<Client[]>([]);
+
+  // Estados para descuentos
   const [globalDiscountType, setGlobalDiscountType] = useState<DiscountType>('none');
   const [globalDiscountValue, setGlobalDiscountValue] = useState(0);
-  const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
-  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
+  const debouncedClientSearch = useDebounce(clientName, 500);
 
-  // Cargar almacenes
+  // Cargar almacenes y establecer almacén inicial
   useEffect(() => {
     const loadWarehouses = async () => {
       try {
         const response = await storageService.getList(1, 100);
         setWarehouses(response.items);
+
+        if (!isProfileLoading && profile?.almacen_asignado && response.items.length > 0) {
+          const assignedWarehouse = response.items.find(
+            w => parseInt(atob(w.id)) === profile.almacen_asignado
+          );
+          if (assignedWarehouse) {
+            setSelectedWarehouse({
+              id: parseInt(atob(assignedWarehouse.id)),
+              name: assignedWarehouse.name
+            });
+          }
+        }
       } catch (error) {
         console.error('Error loading warehouses:', error);
       }
     };
     loadWarehouses();
-  }, []);
+  }, [profile, isProfileLoading]);
 
-  // Establecer almacén inicial cuando se carga el perfil y los almacenes
-  useEffect(() => {
-    if (!isProfileLoading && profile?.almacen_asignado && warehouses.length > 0) {
-      const assignedWarehouse = warehouses.find(
-        w => parseInt(atob(w.id)) === profile.almacen_asignado
-      );
-      
-      if (assignedWarehouse) {
-        setSelectedWarehouse({
-          id: profile.almacen_asignado,
-          name: assignedWarehouse.name
-        });
-      }
-    }
-  }, [profile, warehouses, isProfileLoading]);
-
-  // Cargar clientes
+  // Cargar y filtrar clientes cuando se activa el checkbox
   useEffect(() => {
     const loadClients = async () => {
+      if (!isExistingClient) {
+        setClientSearchResults([]);
+        return;
+      }
+
       try {
-        const response = await getClientList();
-        setClients(response.clients);
+        const response = await getClientList(1, 100);
+        setClientSearchResults(response.clients);
       } catch (error) {
         console.error('Error loading clients:', error);
+        setClientSearchResults([]);
       }
     };
+
     loadClients();
+  }, [isExistingClient]);
+
+  // Filtrar clientes basado en la búsqueda
+  useEffect(() => {
+    const searchClients = async () => {
+      if (!isExistingClient) {
+        return;
+      }
+
+      if (!debouncedClientSearch.trim()) {
+        try {
+          setIsSearching(true);
+          const response = await getClientList(1, 100);
+          setClientSearchResults(response.clients);
+          setSelectedIndex(-1);
+        } catch (error) {
+          console.error('Error loading clients:', error);
+          setClientSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+        return;
+      }
+
+      try {
+        setIsSearching(true);
+        const response = await getClientList(1, 10, debouncedClientSearch);
+        setClientSearchResults(response.clients);
+        setSelectedIndex(-1);
+      } catch (error) {
+        console.error('Error searching clients:', error);
+        setClientSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    searchClients();
+  }, [debouncedClientSearch, isExistingClient]);
+
+  // Agregar efecto para el click fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.client-search-container')) {
+        setShowClientResults(false);
+        setSelectedIndex(-1);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Agregar manejador de teclas
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!showClientResults || clientSearchResults.length === 0) return;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < clientSearchResults.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
+        break;
+      case 'Enter':
+        e.preventDefault();
+        if (selectedIndex >= 0) {
+          handleClientSelect(clientSearchResults[selectedIndex]);
+        }
+        break;
+      case 'Escape':
+        e.preventDefault();
+        setShowClientResults(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
 
   // Búsqueda de productos
   useEffect(() => {
@@ -88,32 +184,19 @@ export function SalesPage() {
         return;
       }
 
-      setIsLoading(true);
+      setIsSearching(true);
       try {
         const results = await searchProducts(debouncedSearch, selectedWarehouse.id);
         setSearchResults(results);
       } catch (error) {
         console.error('Error searching products:', error);
       } finally {
-        setIsLoading(false);
+        setIsSearching(false);
       }
     };
 
     performSearch();
   }, [debouncedSearch, selectedWarehouse]);
-
-  // Manejador de clic fuera del dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.search-container')) {
-        setShowSearchResults(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleWarehouseChange = (warehouseId: string) => {
     const newWarehouse = warehouses.find(w => w.id === warehouseId);
@@ -144,6 +227,15 @@ export function SalesPage() {
     setShowSearchResults(false);
   };
 
+  const handleClientSelect = (client: Client) => {
+    setClientName(client.name);
+    setShowClientResults(false);
+  };
+
+  const handleAddNewClient = () => {
+    navigate('/index/users/clients');
+  };
+
   const handleRemoveProduct = (productId: string) => {
     setSelectedProducts(prev => prev.filter(p => p.encrypted_id !== productId));
     setQuantities(prev => {
@@ -161,6 +253,7 @@ export function SalesPage() {
       }));
     }
   };
+  
 
   const handleProductDiscountChange = (
     productId: string,
@@ -206,7 +299,8 @@ export function SalesPage() {
       return subtotal * (1 - (globalDiscountValue / 100));
     }
     
-    return Math.max(subtotal - globalDiscountValue, 0);
+    const total = Math.max(subtotal - globalDiscountValue, 0);
+    return isNaN(total) ? 0 : total;
   };
 
   return (
@@ -367,33 +461,85 @@ export function SalesPage() {
         {/* Sección de resumen y total */}
         <div className="col-span-4">
           <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold">Resumen de Venta</h2>
-              <button
-                onClick={() => setShowClientSearch(true)}
-                className="flex items-center text-blue-600 hover:text-blue-800"
-              >
-                <Users className="h-5 w-5 mr-1" />
-                {selectedClient ? 'Cambiar Cliente' : 'Seleccionar Cliente'}
-              </button>
-            </div>
+            <h2 className="text-xl font-semibold text-center mb-6">Resumen de Venta</h2>
 
-            {showClientSearch && (
-              <div className="mb-6">
-                <select
-                  value={selectedClient}
-                  onChange={(e) => setSelectedClient(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">Seleccionar cliente</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
+            <div className="space-y-4 mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  onFocus={() => {
+                    if (isExistingClient) {
+                      setShowClientResults(true);
+                      setSelectedIndex(-1);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Nombre del cliente"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                />
+                
+                {showClientResults && isExistingClient && (
+                  <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isSearching ? (
+                      <div className="px-4 py-2 text-gray-500">
+                        Buscando...
+                      </div>
+                    ) : clientSearchResults.length > 0 ? (
+                      clientSearchResults.map((client, index) => (
+                        <div
+                          key={client.id}
+                          onClick={() => handleClientSelect(client)}
+                          className={`px-4 py-2 cursor-pointer ${
+                            index === selectedIndex 
+                              ? 'bg-blue-50 text-blue-700' 
+                              : 'hover:bg-gray-100'
+                          }`}
+                        >
+                          {client.name}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-4 py-2 text-gray-500">
+                        Cliente no existe
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="existingClient"
+                    checked={isExistingClient}
+                    onChange={(e) => {
+                      setIsExistingClient(e.target.checked);
+                      if (!e.target.checked) {
+                        setClientName('');
+                        setShowClientResults(false);
+                      }
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="existingClient" className="text-sm text-gray-600">
+                    Ya existe?
+                  </label>
+                </div>
+
+                {!isExistingClient && (
+                  <button
+                    onClick={handleAddNewClient}
+                    className="flex items-center text-blue-600 hover:text-blue-800"
+                  >
+                    <UserPlus className="h-5 w-5 mr-1" />
+                    <span className="text-sm">Agregar Cliente</span>
+                  </button>
+                )}
+              </div>
+            </div>
 
             <div className="space-y-4">
               <div className="flex justify-between text-lg">
@@ -446,7 +592,7 @@ export function SalesPage() {
 
               <button
                 className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium mt-6"
-                disabled={selectedProducts.length === 0 || !selectedClient}
+                disabled={selectedProducts.length === 0 || !clientName.trim()}
               >
                 Procesar Venta
               </button>

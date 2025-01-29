@@ -300,13 +300,13 @@ export function InventoryPage() {
     { 
       header: 'Cantidad por Presentación', 
       accessor: 'cantidad_por_presentacion' as keyof ProductDetail,
-      render: (value: number | null) => value ?? 'N/A'
+      render: (value: number | null) => (value !== null && value < 0 ? 0 : value ?? 'N/A')
     },
     { header: 'Unidades por Presentación', accessor: 'unidades_por_presentacion' as keyof ProductDetail },
-    { 
-      header: 'Total Unidades', 
+    {
+      header: 'Total Unidades',
       accessor: 'total_unidades' as keyof ProductDetail,
-      render: (value: number | null) => value ?? 'N/A'
+      render: (value: number | null) => (value !== null && value < 0 ? 0 : value ?? 'N/A')
     },
     { 
       header: 'Precio Venta Presentación', 

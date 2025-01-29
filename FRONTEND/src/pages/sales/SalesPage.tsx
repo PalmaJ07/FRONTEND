@@ -8,6 +8,7 @@ import { Client } from '../../types/clients';
 import { useDebounce } from '../../hooks/useDebounce';
 import { useProfile } from '../../hooks/useProfile';
 import { createConfigService } from '../../services/config';
+import Swal from 'sweetalert2';
 
 const storageService = createConfigService('almacen');
 
@@ -28,11 +29,6 @@ export function SalesPage() {
   const [selectedProducts, setSelectedProducts] = useState<ProductWithDiscount[]>([]);
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  // Agregar estado para el índice seleccionado con teclado
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-
-
   // Estados para el manejo de almacenes
   const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
   const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: number; name: string } | null>(null);
@@ -42,6 +38,10 @@ export function SalesPage() {
   const [isExistingClient, setIsExistingClient] = useState(false);
   const [showClientResults, setShowClientResults] = useState(false);
   const [clientSearchResults, setClientSearchResults] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  // Agregar estado para el índice seleccionado con teclado
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Estados para descuentos
   const [globalDiscountType, setGlobalDiscountType] = useState<DiscountType>('none');
@@ -96,56 +96,49 @@ export function SalesPage() {
   }, [isExistingClient]);
 
   // Filtrar clientes basado en la búsqueda
+  // Modificar el efecto de búsqueda de clientes
+useEffect(() => {
+  const searchClients = async () => {
+    if (!isExistingClient) return;
+
+    try {
+      setIsSearching(true);
+      const response = await getClientList(1, 100, debouncedClientSearch);
+      setClientSearchResults(response.clients);
+      setSelectedIndex(-1);
+    } catch (error) {
+      console.error('Error searching clients:', error);
+      setClientSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  searchClients();
+}, [debouncedClientSearch, isExistingClient]);
+
+
+  // Agregar efecto para el click fuera
   useEffect(() => {
-    const searchClients = async () => {
-      if (!isExistingClient) {
+    const loadProducts = async () => {
+      if (!selectedWarehouse) {
+        setSearchResults([]);
         return;
       }
 
-      if (!debouncedClientSearch.trim()) {
-        try {
-          setIsSearching(true);
-          const response = await getClientList(1, 100);
-          setClientSearchResults(response.clients);
-          setSelectedIndex(-1);
-        } catch (error) {
-          console.error('Error loading clients:', error);
-          setClientSearchResults([]);
-        } finally {
-          setIsSearching(false);
-        }
-        return;
-      }
-
+      setIsSearching(true);
       try {
-        setIsSearching(true);
-        const response = await getClientList(1, 10, debouncedClientSearch);
-        setClientSearchResults(response.clients);
-        setSelectedIndex(-1);
+        const results = await searchProducts(debouncedSearch, selectedWarehouse.id);
+        setSearchResults(results);
       } catch (error) {
-        console.error('Error searching clients:', error);
-        setClientSearchResults([]);
+        console.error('Error searching products:', error);
       } finally {
         setIsSearching(false);
       }
     };
 
-    searchClients();
-  }, [debouncedClientSearch, isExistingClient]);
-
-  // Agregar efecto para el click fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (!target.closest('.client-search-container')) {
-        setShowClientResults(false);
-        setSelectedIndex(-1);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    loadProducts();
+  }, [debouncedSearch, selectedWarehouse]);
 
   // Agregar manejador de teclas
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -198,16 +191,65 @@ export function SalesPage() {
     performSearch();
   }, [debouncedSearch, selectedWarehouse]);
 
-  const handleWarehouseChange = (warehouseId: string) => {
+  const handleClientInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setClientName(value);
+    if (isExistingClient) {
+      setShowClientResults(true);
+      setSelectedClient(null);
+    }
+  };
+
+  // Modificar el manejador del checkbox de cliente existente
+  const handleExistingClientToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsExistingClient(checked);
+    if (!checked) {
+      setClientName('');
+      setShowClientResults(false);
+      setSelectedClient(null);
+    } else {
+      setShowClientResults(true);
+    }
+  };
+
+  const handleWarehouseChange = async (warehouseId: string) => {
+    if (selectedProducts.length > 0) {
+      const result = await Swal.fire({
+        title: '¿Cambiar de bodega?',
+        text: 'Se perderá el registro de los productos seleccionados',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, cambiar',
+        cancelButtonText: 'Cancelar'
+      });
+
+      if (!result.isConfirmed) {
+        return;
+      }
+    }
+
     const newWarehouse = warehouses.find(w => w.id === warehouseId);
     if (newWarehouse) {
       setSelectedWarehouse({
         id: parseInt(atob(warehouseId)),
         name: newWarehouse.name
       });
+      setSelectedProducts([]);
+      setQuantities({});
       setShowSearchResults(false);
       setSearchTerm('');
       setSearchResults([]);
+
+      // Cargar productos de la nueva bodega
+      try {
+        const results = await searchProducts('', parseInt(atob(warehouseId)));
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
     }
   };
 
@@ -228,8 +270,10 @@ export function SalesPage() {
   };
 
   const handleClientSelect = (client: Client) => {
+    setSelectedClient(client);
     setClientName(client.name);
     setShowClientResults(false);
+    setSelectedIndex(-1);
   };
 
   const handleAddNewClient = () => {
@@ -334,7 +378,11 @@ export function SalesPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => setShowSearchResults(true)}
+            onFocus={() => {
+              if (selectedWarehouse) {
+                setShowSearchResults(true);
+              }
+            }}
             placeholder="Buscar productos..."
             className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={!selectedWarehouse}
@@ -342,28 +390,36 @@ export function SalesPage() {
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
           
           {/* Resultados de búsqueda */}
-          {showSearchResults && searchResults.length > 0 && (
+          {showSearchResults && (
             <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg max-h-96 overflow-y-auto">
-              {searchResults.map((product) => (
-                <div
-                  key={product.encrypted_id}
-                  onClick={() => handleProductSelect(product)}
-                  className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                >
-                  <div className="grid grid-cols-4 gap-2 text-sm">
-                    <div className="font-medium">{product.n_producto}</div>
-                    <div>Stock: {product.total_unidades}</div>
-                    <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
-                    <div>Precio: ${product.precio_venta_unidades}</div>
+              {isSearching ? (
+                <div className="px-4 py-2 text-gray-500">Buscando...</div>
+              ) : searchResults.length > 0 ? (
+                searchResults.map((product) => (
+                  <div
+                    key={product.encrypted_id}
+                    onClick={() => handleProductSelect(product)}
+                    className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <div className="grid grid-cols-4 gap-2 text-sm">
+                      <div className="font-medium">{product.n_producto}</div>
+                      <div>Stock: {product.total_unidades}</div>
+                      <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
+                      <div>Precio: ${product.precio_venta_unidades}</div>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="px-4 py-2 text-gray-500">
+                  No se encontraron productos
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-6">
+      <div className="grid grid-cols-12 gap-6 mt-6">
         {/* Sección de productos seleccionados */}
         <div className="col-span-8">
           <div className="bg-white rounded-lg shadow-lg">
@@ -378,13 +434,13 @@ export function SalesPage() {
                   <p>No hay productos seleccionados</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {selectedProducts.map((product) => (
-                    <div key={product.encrypted_id} className="bg-gray-50 p-3 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
+                    <div key={product.encrypted_id} className="bg-gray-50 p-2 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
                         <div>
-                          <h3 className="font-medium">{product.n_producto}</h3>
-                          <p className="text-sm text-gray-600">
+                          <h3 className="font-medium text-sm">{product.n_producto}</h3>
+                          <p className="text-xs text-gray-600">
                             Precio unitario: ${product.precio_venta_unidades}
                           </p>
                         </div>
@@ -396,7 +452,7 @@ export function SalesPage() {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="block text-xs font-medium text-gray-700 mb-1">
                             Cantidad
@@ -464,20 +520,21 @@ export function SalesPage() {
             <h2 className="text-xl font-semibold text-center mb-6">Resumen de Venta</h2>
 
             <div className="space-y-4 mb-6">
-              <div className="relative">
+              <div className="client-search-container relative">
                 <input
                   type="text"
                   value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
+                  onChange={handleClientInputChange}
                   onFocus={() => {
                     if (isExistingClient) {
                       setShowClientResults(true);
-                      setSelectedIndex(-1);
                     }
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder="Nombre del cliente"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${
+                    selectedClient ? 'border-green-500' : 'border-gray-300'
+                  } rounded-md focus:ring-2 focus:ring-blue-500`}
                 />
                 
                 {showClientResults && isExistingClient && (
@@ -491,8 +548,9 @@ export function SalesPage() {
                         <div
                           key={client.id}
                           onClick={() => handleClientSelect(client)}
+                          onMouseEnter={() => setSelectedIndex(index)}
                           className={`px-4 py-2 cursor-pointer ${
-                            index === selectedIndex 
+                            (index === selectedIndex || client.id === selectedClient?.id)
                               ? 'bg-blue-50 text-blue-700' 
                               : 'hover:bg-gray-100'
                           }`}
@@ -515,13 +573,7 @@ export function SalesPage() {
                     type="checkbox"
                     id="existingClient"
                     checked={isExistingClient}
-                    onChange={(e) => {
-                      setIsExistingClient(e.target.checked);
-                      if (!e.target.checked) {
-                        setClientName('');
-                        setShowClientResults(false);
-                      }
-                    }}
+                    onChange={handleExistingClientToggle}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
                   <label htmlFor="existingClient" className="text-sm text-gray-600">
@@ -539,6 +591,15 @@ export function SalesPage() {
                   </button>
                 )}
               </div>
+
+              {selectedClient && (
+              <div className="mt-2 p-2 bg-green-50 rounded-md">
+                <p className="text-sm text-green-700">
+                  Cliente seleccionado: {selectedClient.name}
+                </p>
+              </div>
+            )}
+
             </div>
 
             <div className="space-y-4">

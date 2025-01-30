@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect} from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Trash2, Percent, DollarSign, Store, UserPlus } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, Percent, Coins, Store, UserPlus } from 'lucide-react';
 import { ProductDetail } from '../../types/sales';
 import { searchProducts } from '../../services/sales';
 import { getClientList } from '../../services/clients';
@@ -17,6 +17,7 @@ type DiscountType = 'percentage' | 'amount' | 'none';
 interface ProductWithDiscount extends ProductDetail {
   discountType: DiscountType;
   discountValue: number;
+  unitType: 'presentation' | 'units'; // Agregamos el tipo de unidad
 }
 
 export function SalesPage() {
@@ -43,12 +44,41 @@ export function SalesPage() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isSearching, setIsSearching] = useState(false);
 
+  
+
   // Estados para descuentos
   const [globalDiscountType, setGlobalDiscountType] = useState<DiscountType>('none');
   const [globalDiscountValue, setGlobalDiscountValue] = useState(0);
 
   const debouncedSearch = useDebounce(searchTerm, 500);
   const debouncedClientSearch = useDebounce(clientName, 500);
+  
+  const searchContainerRef = React.useRef<HTMLDivElement>(null);
+  const clientSearchContainerRef = React.useRef<HTMLDivElement>(null);
+
+
+  // Efecto para manejar clics fuera de los contenedores
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Verificar si el clic fue fuera del contenedor de búsqueda de productos
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSearchResults(false);
+      }
+
+      // Verificar si el clic fue fuera del contenedor de búsqueda de clientes
+      if (clientSearchContainerRef.current && !clientSearchContainerRef.current.contains(event.target as Node)) {
+        setShowClientResults(false);
+      }
+    };
+
+    // Agregar el event listener
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Limpiar el event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Cargar almacenes y establecer almacén inicial
   useEffect(() => {
@@ -258,7 +288,8 @@ useEffect(() => {
       setSelectedProducts(prev => [...prev, {
         ...product,
         discountType: 'none',
-        discountValue: 0
+        discountValue: 0,
+        unitType: 'units' // Por defecto en presentación
       }]);
       setQuantities(prev => ({
         ...prev,
@@ -267,6 +298,18 @@ useEffect(() => {
     }
     setSearchTerm('');
     setShowSearchResults(false);
+  };
+
+  const handleUnitTypeChange = (productId: string, unitType: 'presentation' | 'units') => {
+    setSelectedProducts(prev => prev.map(product => {
+      if (product.encrypted_id === productId) {
+        return {
+          ...product,
+          unitType
+        };
+      }
+      return product;
+    }));
   };
 
   const handleClientSelect = (client: Client) => {
@@ -317,9 +360,12 @@ useEffect(() => {
   };
 
   const calculateProductTotal = (product: ProductWithDiscount, quantity: number): number => {
-    const basePrice = parseFloat(product.precio_venta_unidades) * quantity;
+    // Obtener el precio base según el tipo de unidad
+    const basePrice = product.unitType === 'presentation' 
+      ? parseFloat(product.precio_venta_presentacion) * quantity
+      : parseFloat(product.precio_venta_unidades) * quantity;
     
-    if (product.discountType === 'none') return basePrice;
+    if (product.discountType === 'none' || !basePrice) return basePrice || 0;
     
     if (product.discountType === 'percentage') {
       return basePrice * (1 - (product.discountValue / 100));
@@ -373,7 +419,7 @@ useEffect(() => {
         </div>
 
         {/* Barra de búsqueda */}
-        <div className="search-container relative">
+        <div ref={searchContainerRef} className="search-container relative">
           <input
             type="text"
             value={searchTerm}
@@ -405,7 +451,7 @@ useEffect(() => {
                       <div className="font-medium">{product.n_producto}</div>
                       <div>Stock: {product.total_unidades}</div>
                       <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
-                      <div>Precio: ${product.precio_venta_unidades}</div>
+                      <div>Precio: C${product.precio_venta_unidades}</div>
                     </div>
                   </div>
                 ))
@@ -441,7 +487,7 @@ useEffect(() => {
                         <div>
                           <h3 className="font-medium text-sm">{product.n_producto}</h3>
                           <p className="text-xs text-gray-600">
-                            Precio unitario: ${product.precio_venta_unidades}
+                          Precio unitario: C${product.precio_venta_unidades}
                           </p>
                         </div>
                         <button
@@ -452,9 +498,10 @@ useEffect(() => {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
+                      <div className="flex items-center gap-4">
+                        {/* Cantidad */}
+                        <div className="flex flex-col">
+                          <label className="text-xs font-medium text-gray-700 mb-1">
                             Cantidad
                           </label>
                           <input
@@ -462,48 +509,74 @@ useEffect(() => {
                             min="1"
                             value={quantities[product.encrypted_id] || 1}
                             onChange={(e) => handleQuantityChange(product.encrypted_id, parseInt(e.target.value))}
-                            className="w-full p-1.5 text-sm border border-gray-300 rounded"
+                            className="w-36 p-1.5 text-sm border border-gray-300 rounded"
                           />
                         </div>
-                        
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
+
+                        {/* Descuento (ahora más grande) */}
+                        <div className="flex flex-col">
+                          <label className="text-xs font-medium text-gray-700 mb-1">
                             Descuento
                           </label>
-                          <div className="flex space-x-2">
+                          <div className="flex items-center gap-2">
                             <select
                               value={product.discountType}
-                              onChange={(e) => handleProductDiscountChange(
-                                product.encrypted_id, 
-                                e.target.value as DiscountType,
-                                product.discountValue
-                              )}
-                              className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
+                              onChange={(e) =>
+                                handleProductDiscountChange(
+                                  product.encrypted_id,
+                                  e.target.value as DiscountType,
+                                  product.discountValue
+                                )
+                              }
+                              className="w-36 p-1.5 text-sm border border-gray-300 rounded"
                             >
-                              <option value="none">Sin descuento</option>
-                              <option value="percentage">Porcentaje</option>
-                              <option value="amount">Monto</option>
+                              <option value="none" >Sin descuento</option>
+                              <option value="percentage" value-type="1">Porcentaje</option>
+                              <option value="amount" value-type="0">Monto</option>
                             </select>
                             {product.discountType !== 'none' && (
                               <input
                                 type="number"
                                 min="0"
                                 value={product.discountValue}
-                                onChange={(e) => handleProductDiscountChange(
-                                  product.encrypted_id,
-                                  product.discountType,
-                                  parseFloat(e.target.value)
-                                )}
-                                className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
+                                onChange={(e) =>
+                                  handleProductDiscountChange(
+                                    product.encrypted_id,
+                                    product.discountType,
+                                    parseFloat(e.target.value)
+                                  )
+                                }
+                                className="w-28 p-1.5 text-sm border border-gray-300 rounded"
                               />
                             )}
                           </div>
                         </div>
+
+                        {/* Unidades de Venta */}
+                        <div className="flex flex-col">
+                          <label className="text-xs font-medium text-gray-700 mb-1">
+                            Unidades de Venta
+                          </label>
+                          <select
+                            value={product.unitType || "units"} // ✅ Ahora "Por Unidades" es el valor predeterminado
+                            onChange={(e) =>
+                              handleUnitTypeChange(
+                                product.encrypted_id,
+                                e.target.value as "units" | "presentation"
+                              )
+                            }
+                            className="w-36 p-1.5 text-sm border border-gray-300 rounded"
+                          >
+                            <option value="units" value-type="0">Por Unidades</option>
+                            <option value="presentation" value-type="1">Por Presentación</option>
+                          </select>
+                        </div>
+
                       </div>
                       
                       <div className="text-right mt-2">
                         <span className="text-sm font-medium">
-                          Subtotal: ${calculateProductTotal(product, quantities[product.encrypted_id] || 0).toFixed(2)}
+                          Subtotal: C${calculateProductTotal(product, quantities[product.encrypted_id] || 0).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -520,7 +593,7 @@ useEffect(() => {
             <h2 className="text-xl font-semibold text-center mb-6">Resumen de Venta</h2>
 
             <div className="space-y-4 mb-6">
-              <div className="client-search-container relative">
+              <div ref={clientSearchContainerRef} className="client-search-container relative">
                 <input
                   type="text"
                   value={clientName}
@@ -605,7 +678,7 @@ useEffect(() => {
             <div className="space-y-4">
               <div className="flex justify-between text-lg">
                 <span>Subtotal:</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
+                <span>C${calculateSubtotal().toFixed(2)}</span>
               </div>
 
               <div>
@@ -635,7 +708,7 @@ useEffect(() => {
                         <span className="absolute left-2 top-2">
                           {globalDiscountType === 'percentage' ? 
                             <Percent className="h-5 w-5 text-gray-400" /> : 
-                            <DollarSign className="h-5 w-5 text-gray-400" />
+                            <Coins className="h-5 w-5 text-gray-400" />
                           }
                         </span>
                       </div>
@@ -647,7 +720,7 @@ useEffect(() => {
               <div className="pt-4 border-t">
                 <div className="flex justify-between text-xl font-bold">
                   <span>Total:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
+                  <span>C${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
 

@@ -19,9 +19,15 @@ import { SalesReport } from './pages/reports/SalesReport';
 import { ProfitsReport } from './pages/reports/ProfitsReport';
 import { MovementsReport } from './pages/reports/MovementsReport';
 import { InventoryPage } from './pages/inventory/InventoryPage'
-import { SalesPage } from './pages/sales/SalesPage';
+import { SalesPage } from './pages/sales/SalesPage';	
+import { SalesPageAdmin } from './pages/sales/SalesPageAdmin';
+import { useProfile } from './hooks/useProfile';
+
 
 function App() {
+  const { profile } = useProfile();
+  const isAdmin = profile?.user_type === 'Administrador';
+
   return (
     <BrowserRouter>
       <Routes>
@@ -44,7 +50,7 @@ function App() {
           <Route path="reports/sales" element={<SalesReport />} />
           <Route path="reports/profits" element={<ProfitsReport />} />
           <Route path="inventory" element={<InventoryPage />} />
-          <Route path="sales" element={<SalesPage />} />
+          <Route path="sales" element={isAdmin ? <SalesPageAdmin /> : <SalesPage />} />
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

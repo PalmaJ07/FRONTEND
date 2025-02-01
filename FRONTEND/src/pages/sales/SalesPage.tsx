@@ -1,666 +1,253 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Trash2, Percent, DollarSign, Store, UserPlus } from 'lucide-react';
+import { Store, Search, X, ArrowLeft } from 'lucide-react';
 import { ProductDetail } from '../../types/sales';
 import { searchProducts } from '../../services/sales';
-import { getClientList } from '../../services/clients';
-import { Client } from '../../types/clients';
-import { useDebounce } from '../../hooks/useDebounce';
-import { useProfile } from '../../hooks/useProfile';
 import { createConfigService } from '../../services/config';
-import Swal from 'sweetalert2';
+import { useProfile } from '../../hooks/useProfile';
+import { Pagination } from '../../components/common/Pagination';
 
 const storageService = createConfigService('almacen');
 
-type DiscountType = 'percentage' | 'amount' | 'none';
+interface WarehouseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  warehouses: { id: string; name: string }[];
+  onWarehouseSelect: (warehouseId: string) => void;
+}
 
-interface ProductWithDiscount extends ProductDetail {
-  discountType: DiscountType;
-  discountValue: number;
+interface ProductsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  warehouseName: string;
+  products: ProductDetail[];
+  onBack: () => void;
+}
+
+function WarehouseModal({ isOpen, onClose, warehouses, onWarehouseSelect }: WarehouseModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold mb-6">Consultar Almacenes</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {warehouses.map(warehouse => (
+              <div
+                key={warehouse.id}
+                onClick={() => onWarehouseSelect(warehouse.id)}
+                className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+              >
+                <div className="flex items-center space-x-3">
+                  <Store className="h-6 w-6 text-blue-600" />
+                  <span className="font-medium">{warehouse.name}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex justify-end">
+            
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductsModal({ isOpen, onClose, warehouseName, products: initialProducts, onBack }: ProductsModalProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [filteredProducts, setFilteredProducts] = useState(initialProducts);
+
+  useEffect(() => {
+    const filtered = initialProducts.filter(
+      product => 
+        product.n_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.fecha_expiracion?.includes(searchTerm)
+    );
+    setFilteredProducts(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, initialProducts]);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold flex items-center">
+              <Store className="h-6 w-6 mr-2 text-blue-600" />
+              {warehouseName}
+            </h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por nombre o fecha de expiración..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg"
+              />
+              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Producto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stock
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precio
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Expiración
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedProducts.map((product) => (
+                  <tr key={product.encrypted_id}>
+                    <td className="px-6 py-4 whitespace-nowrap">{product.n_producto}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{product.total_unidades}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">C${product.precio_venta_unidades}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{product.fecha_expiracion || 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={Math.ceil(filteredProducts.length / pageSize)}
+              pageSize={pageSize}
+              totalItems={filteredProducts.length}
+              pageSizeOptions={[5, 10, 25, 50]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={setPageSize}
+            />
+          </div>
+
+          <div className="mt-6 flex justify-between px-4">
+            <button
+              onClick={onBack}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 flex items-center"
+            >
+              <ArrowLeft className="h-5 w-5 mr-2" />
+              Atrás
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function SalesPage() {
-  const navigate = useNavigate();
-  const { profile, isLoading: isProfileLoading } = useProfile();
-  
-  // Estados para la búsqueda y selección de productos
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<ProductDetail[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<ProductWithDiscount[]>([]);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  // Estados para el manejo de almacenes
+  const { profile } = useProfile();
   const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
-  const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: number; name: string } | null>(null);
+  const [showWarehouseModal, setShowWarehouseModal] = useState(false);
+  const [showProductsModal, setShowProductsModal] = useState(false);
+  const [selectedWarehouse, setSelectedWarehouse] = useState<{ id: string; name: string } | null>(null);
+  const [products, setProducts] = useState<ProductDetail[]>([]);
 
-  // Estados para el manejo de clientes
-  const [clientName, setClientName] = useState('');
-  const [isExistingClient, setIsExistingClient] = useState(false);
-  const [showClientResults, setShowClientResults] = useState(false);
-  const [clientSearchResults, setClientSearchResults] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-  // Agregar estado para el índice seleccionado con teclado
-  const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [isSearching, setIsSearching] = useState(false);
-
-  // Estados para descuentos
-  const [globalDiscountType, setGlobalDiscountType] = useState<DiscountType>('none');
-  const [globalDiscountValue, setGlobalDiscountValue] = useState(0);
-
-  const debouncedSearch = useDebounce(searchTerm, 500);
-  const debouncedClientSearch = useDebounce(clientName, 500);
-
-  // Cargar almacenes y establecer almacén inicial
   useEffect(() => {
     const loadWarehouses = async () => {
       try {
         const response = await storageService.getList(1, 100);
         setWarehouses(response.items);
-
-        if (!isProfileLoading && profile?.almacen_asignado && response.items.length > 0) {
-          const assignedWarehouse = response.items.find(
-            w => parseInt(atob(w.id)) === profile.almacen_asignado
-          );
-          if (assignedWarehouse) {
-            setSelectedWarehouse({
-              id: parseInt(atob(assignedWarehouse.id)),
-              name: assignedWarehouse.name
-            });
-          }
-        }
       } catch (error) {
         console.error('Error loading warehouses:', error);
       }
     };
     loadWarehouses();
-  }, [profile, isProfileLoading]);
+  }, []);
 
-  // Cargar y filtrar clientes cuando se activa el checkbox
-  useEffect(() => {
-    const loadClients = async () => {
-      if (!isExistingClient) {
-        setClientSearchResults([]);
-        return;
-      }
-
-      try {
-        const response = await getClientList(1, 100);
-        setClientSearchResults(response.clients);
-      } catch (error) {
-        console.error('Error loading clients:', error);
-        setClientSearchResults([]);
-      }
-    };
-
-    loadClients();
-  }, [isExistingClient]);
-
-  // Filtrar clientes basado en la búsqueda
-  // Modificar el efecto de búsqueda de clientes
-useEffect(() => {
-  const searchClients = async () => {
-    if (!isExistingClient) return;
-
-    try {
-      setIsSearching(true);
-      const response = await getClientList(1, 100, debouncedClientSearch);
-      setClientSearchResults(response.clients);
-      setSelectedIndex(-1);
-    } catch (error) {
-      console.error('Error searching clients:', error);
-      setClientSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  searchClients();
-}, [debouncedClientSearch, isExistingClient]);
-
-
-  // Agregar efecto para el click fuera
-  useEffect(() => {
-    const loadProducts = async () => {
-      if (!selectedWarehouse) {
-        setSearchResults([]);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        const results = await searchProducts(debouncedSearch, selectedWarehouse.id);
-        setSearchResults(results);
-      } catch (error) {
-        console.error('Error searching products:', error);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    loadProducts();
-  }, [debouncedSearch, selectedWarehouse]);
-
-  // Agregar manejador de teclas
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!showClientResults || clientSearchResults.length === 0) return;
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setSelectedIndex(prev => 
-          prev < clientSearchResults.length - 1 ? prev + 1 : prev
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setSelectedIndex(prev => prev > 0 ? prev - 1 : prev);
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (selectedIndex >= 0) {
-          handleClientSelect(clientSearchResults[selectedIndex]);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setShowClientResults(false);
-        setSelectedIndex(-1);
-        break;
-    }
-  };
-
-  // Búsqueda de productos
-  useEffect(() => {
-    const performSearch = async () => {
-      if (!debouncedSearch || !selectedWarehouse) {
-        setSearchResults([]);
-        return;
-      }
-
-      setIsSearching(true);
-      try {
-        const results = await searchProducts(debouncedSearch, selectedWarehouse.id);
-        setSearchResults(results);
-      } catch (error) {
-        console.error('Error searching products:', error);
-      } finally {
-        setIsSearching(false);
-      }
-    };
-
-    performSearch();
-  }, [debouncedSearch, selectedWarehouse]);
-
-  const handleClientInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setClientName(value);
-    if (isExistingClient) {
-      setShowClientResults(true);
-      setSelectedClient(null);
-    }
-  };
-
-  // Modificar el manejador del checkbox de cliente existente
-  const handleExistingClientToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
-    setIsExistingClient(checked);
-    if (!checked) {
-      setClientName('');
-      setShowClientResults(false);
-      setSelectedClient(null);
-    } else {
-      setShowClientResults(true);
-    }
-  };
-
-  const handleWarehouseChange = async (warehouseId: string) => {
-    if (selectedProducts.length > 0) {
-      const result = await Swal.fire({
-        title: '¿Cambiar de bodega?',
-        text: 'Se perderá el registro de los productos seleccionados',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, cambiar',
-        cancelButtonText: 'Cancelar'
-      });
-
-      if (!result.isConfirmed) {
-        return;
-      }
-    }
-
-    const newWarehouse = warehouses.find(w => w.id === warehouseId);
-    if (newWarehouse) {
-      setSelectedWarehouse({
-        id: parseInt(atob(warehouseId)),
-        name: newWarehouse.name
-      });
-      setSelectedProducts([]);
-      setQuantities({});
-      setShowSearchResults(false);
-      setSearchTerm('');
-      setSearchResults([]);
-
-      // Cargar productos de la nueva bodega
+  const handleWarehouseSelect = async (warehouseId: string) => {
+    const warehouse = warehouses.find(w => w.id === warehouseId);
+    if (warehouse) {
+      setSelectedWarehouse(warehouse);
       try {
         const results = await searchProducts('', parseInt(atob(warehouseId)));
-        setSearchResults(results);
+        setProducts(results);
+        setShowWarehouseModal(false);
+        setShowProductsModal(true);
       } catch (error) {
         console.error('Error loading products:', error);
       }
     }
   };
 
-  const handleProductSelect = (product: ProductDetail) => {
-    if (!selectedProducts.some(p => p.encrypted_id === product.encrypted_id)) {
-      setSelectedProducts(prev => [...prev, {
-        ...product,
-        discountType: 'none',
-        discountValue: 0
-      }]);
-      setQuantities(prev => ({
-        ...prev,
-        [product.encrypted_id]: 1
-      }));
-    }
-    setSearchTerm('');
-    setShowSearchResults(false);
-  };
-
-  const handleClientSelect = (client: Client) => {
-    setSelectedClient(client);
-    setClientName(client.name);
-    setShowClientResults(false);
-    setSelectedIndex(-1);
-  };
-
-  const handleAddNewClient = () => {
-    navigate('/index/users/clients');
-  };
-
-  const handleRemoveProduct = (productId: string) => {
-    setSelectedProducts(prev => prev.filter(p => p.encrypted_id !== productId));
-    setQuantities(prev => {
-      const newQuantities = { ...prev };
-      delete newQuantities[productId];
-      return newQuantities;
-    });
-  };
-
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    if (quantity > 0) {
-      setQuantities(prev => ({
-        ...prev,
-        [productId]: quantity
-      }));
-    }
-  };
-  
-
-  const handleProductDiscountChange = (
-    productId: string,
-    discountType: DiscountType,
-    discountValue: number = 0
-  ) => {
-    setSelectedProducts(prev => prev.map(product => {
-      if (product.encrypted_id === productId) {
-        return {
-          ...product,
-          discountType,
-          discountValue: discountValue
-        };
-      }
-      return product;
-    }));
-  };
-
-  const calculateProductTotal = (product: ProductWithDiscount, quantity: number): number => {
-    const basePrice = parseFloat(product.precio_venta_unidades) * quantity;
-    
-    if (product.discountType === 'none') return basePrice;
-    
-    if (product.discountType === 'percentage') {
-      return basePrice * (1 - (product.discountValue / 100));
-    }
-    
-    return Math.max(basePrice - product.discountValue, 0);
-  };
-
-  const calculateSubtotal = (): number => {
-    return selectedProducts.reduce((total, product) => {
-      return total + calculateProductTotal(product, quantities[product.encrypted_id] || 0);
-    }, 0);
-  };
-
-  const calculateTotal = (): number => {
-    const subtotal = calculateSubtotal();
-    
-    if (globalDiscountType === 'none') return subtotal;
-    
-    if (globalDiscountType === 'percentage') {
-      return subtotal * (1 - (globalDiscountValue / 100));
-    }
-    
-    const total = Math.max(subtotal - globalDiscountValue, 0);
-    return isNaN(total) ? 0 : total;
+  const handleBackToWarehouses = () => {
+    setShowProductsModal(false);
+    setShowWarehouseModal(true);
   };
 
   return (
     <div className="p-6">
-      <div className="max-w-[calc(100%-384px)] mb-6">
-        {/* Selector de almacén */}
-        <div className="flex items-center space-x-4 mb-4">
-          <div className="flex items-center space-x-2">
-            <Store className="h-5 w-5 text-gray-500" />
-            <span className="font-medium text-gray-700">
-              Almacén: {selectedWarehouse?.name}
-            </span>
-          </div>
-          <select
-            value=""
-            onChange={(e) => handleWarehouseChange(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          >
-            <option value="">Cambiar Almacén</option>
-            {warehouses.map(warehouse => (
-              <option key={warehouse.id} value={warehouse.id}>
-                {warehouse.name}
-              </option>
-            ))}
-          </select>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center space-x-2">
+          <Store className="h-6 w-6 text-blue-600" />
+          <h2 className="text-xl font-semibold">
+            Almacén: {profile?.almacen_asignado ? warehouses.find(w => parseInt(atob(w.id)) === profile.almacen_asignado)?.name : ' Cargando ...'}
+          </h2>
         </div>
-
-        {/* Barra de búsqueda */}
-        <div className="search-container relative">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onFocus={() => {
-              if (selectedWarehouse) {
-                setShowSearchResults(true);
-              }
-            }}
-            placeholder="Buscar productos..."
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            disabled={!selectedWarehouse}
-          />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          
-          {/* Resultados de búsqueda */}
-          {showSearchResults && (
-            <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg max-h-96 overflow-y-auto">
-              {isSearching ? (
-                <div className="px-4 py-2 text-gray-500">Buscando...</div>
-              ) : searchResults.length > 0 ? (
-                searchResults.map((product) => (
-                  <div
-                    key={product.encrypted_id}
-                    onClick={() => handleProductSelect(product)}
-                    className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                  >
-                    <div className="grid grid-cols-4 gap-2 text-sm">
-                      <div className="font-medium">{product.n_producto}</div>
-                      <div>Stock: {product.total_unidades}</div>
-                      <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
-                      <div>Precio: ${product.precio_venta_unidades}</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="px-4 py-2 text-gray-500">
-                  No se encontraron productos
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <button
+          onClick={() => setShowWarehouseModal(true)}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center"
+        >
+          <Store className="h-5 w-5 mr-2" />
+          Consultar Almacenes
+        </button>
       </div>
 
-      <div className="grid grid-cols-12 gap-6 mt-6">
-        {/* Sección de productos seleccionados */}
-        <div className="col-span-8">
-          <div className="bg-white rounded-lg shadow-lg">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">Productos Seleccionados</h2>
-            </div>
-            
-            <div className="p-4">
-              {selectedProducts.length === 0 ? (
-                <div className="text-center py-6 text-gray-500">
-                  <ShoppingCart className="h-10 w-10 mx-auto mb-2" />
-                  <p>No hay productos seleccionados</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {selectedProducts.map((product) => (
-                    <div key={product.encrypted_id} className="bg-gray-50 p-2 rounded-lg">
-                      <div className="flex items-center justify-between mb-1">
-                        <div>
-                          <h3 className="font-medium text-sm">{product.n_producto}</h3>
-                          <p className="text-xs text-gray-600">
-                            Precio unitario: ${product.precio_venta_unidades}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleRemoveProduct(product.encrypted_id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Cantidad
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={quantities[product.encrypted_id] || 1}
-                            onChange={(e) => handleQuantityChange(product.encrypted_id, parseInt(e.target.value))}
-                            className="w-full p-1.5 text-sm border border-gray-300 rounded"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">
-                            Descuento
-                          </label>
-                          <div className="flex space-x-2">
-                            <select
-                              value={product.discountType}
-                              onChange={(e) => handleProductDiscountChange(
-                                product.encrypted_id, 
-                                e.target.value as DiscountType,
-                                product.discountValue
-                              )}
-                              className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
-                            >
-                              <option value="none">Sin descuento</option>
-                              <option value="percentage">Porcentaje</option>
-                              <option value="amount">Monto</option>
-                            </select>
-                            {product.discountType !== 'none' && (
-                              <input
-                                type="number"
-                                min="0"
-                                value={product.discountValue}
-                                onChange={(e) => handleProductDiscountChange(
-                                  product.encrypted_id,
-                                  product.discountType,
-                                  parseFloat(e.target.value)
-                                )}
-                                className="w-1/2 p-1.5 text-sm border border-gray-300 rounded"
-                              />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right mt-2">
-                        <span className="text-sm font-medium">
-                          Subtotal: ${calculateProductTotal(product, quantities[product.encrypted_id] || 0).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      <WarehouseModal
+        isOpen={showWarehouseModal}
+        onClose={() => setShowWarehouseModal(false)}
+        warehouses={warehouses}
+        onWarehouseSelect={handleWarehouseSelect}
+      />
 
-        {/* Sección de resumen y total */}
-        <div className="col-span-4">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-center mb-6">Resumen de Venta</h2>
-
-            <div className="space-y-4 mb-6">
-              <div className="client-search-container relative">
-                <input
-                  type="text"
-                  value={clientName}
-                  onChange={handleClientInputChange}
-                  onFocus={() => {
-                    if (isExistingClient) {
-                      setShowClientResults(true);
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Nombre del cliente"
-                  className={`w-full px-3 py-2 border ${
-                    selectedClient ? 'border-green-500' : 'border-gray-300'
-                  } rounded-md focus:ring-2 focus:ring-blue-500`}
-                />
-                
-                {showClientResults && isExistingClient && (
-                  <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {isSearching ? (
-                      <div className="px-4 py-2 text-gray-500">
-                        Buscando...
-                      </div>
-                    ) : clientSearchResults.length > 0 ? (
-                      clientSearchResults.map((client, index) => (
-                        <div
-                          key={client.id}
-                          onClick={() => handleClientSelect(client)}
-                          onMouseEnter={() => setSelectedIndex(index)}
-                          className={`px-4 py-2 cursor-pointer ${
-                            (index === selectedIndex || client.id === selectedClient?.id)
-                              ? 'bg-blue-50 text-blue-700' 
-                              : 'hover:bg-gray-100'
-                          }`}
-                        >
-                          {client.name}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-gray-500">
-                        Cliente no existe
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="existingClient"
-                    checked={isExistingClient}
-                    onChange={handleExistingClientToggle}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="existingClient" className="text-sm text-gray-600">
-                    Ya existe?
-                  </label>
-                </div>
-
-                {!isExistingClient && (
-                  <button
-                    onClick={handleAddNewClient}
-                    className="flex items-center text-blue-600 hover:text-blue-800"
-                  >
-                    <UserPlus className="h-5 w-5 mr-1" />
-                    <span className="text-sm">Agregar Cliente</span>
-                  </button>
-                )}
-              </div>
-
-              {selectedClient && (
-              <div className="mt-2 p-2 bg-green-50 rounded-md">
-                <p className="text-sm text-green-700">
-                  Cliente seleccionado: {selectedClient.name}
-                </p>
-              </div>
-            )}
-
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between text-lg">
-                <span>Subtotal:</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Descuento Global
-                </label>
-                <div className="flex items-center space-x-2">
-                  <select
-                    value={globalDiscountType}
-                    onChange={(e) => setGlobalDiscountType(e.target.value as DiscountType)}
-                    className="w-1/2 p-2 border border-gray-300 rounded"
-                  >
-                    <option value="none">Sin descuento</option>
-                    <option value="percentage">Porcentaje</option>
-                    <option value="amount">Monto</option>
-                  </select>
-                  {globalDiscountType !== 'none' && (
-                    <div className="w-1/2">
-                      <div className="relative">
-                        <input
-                          type="number"
-                          min="0"
-                          value={globalDiscountValue}
-                          onChange={(e) => setGlobalDiscountValue(parseFloat(e.target.value))}
-                          className="w-full p-2 border border-gray-300 rounded pl-8"
-                        />
-                        <span className="absolute left-2 top-2">
-                          {globalDiscountType === 'percentage' ? 
-                            <Percent className="h-5 w-5 text-gray-400" /> : 
-                            <DollarSign className="h-5 w-5 text-gray-400" />
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-4 border-t">
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
-                </div>
-              </div>
-
-              <button
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium mt-6"
-                disabled={selectedProducts.length === 0 || !clientName.trim()}
-              >
-                Procesar Venta
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {selectedWarehouse && (
+        <ProductsModal
+          isOpen={showProductsModal}
+          onClose={() => setShowProductsModal(false)}
+          warehouseName={selectedWarehouse.name}
+          products={products}
+          onBack={handleBackToWarehouses}
+        />
+      )}
     </div>
   );
 }

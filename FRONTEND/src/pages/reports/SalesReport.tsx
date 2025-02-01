@@ -1,13 +1,12 @@
-//import React from 'react';
 import { PageHeader } from '../../components/layout/PageHeader';
 
-export function ReportsPage() {
+export function SalesReport() {
   return (
     <div className="p-6">
-      <PageHeader title="Reportes" />
+      <PageHeader title="Reporte de Ventas" />
       <div className="bg-white rounded-lg shadow p-6">
         <p className="text-gray-600">
-          Módulo de reportes en desarrollo. Aquí podrás generar reportes de ventas y otros datos importantes del sistema.
+          Aquí podrás ver el reporte detallado de todas las ventas realizadas.
         </p>
       </div>
     </div>

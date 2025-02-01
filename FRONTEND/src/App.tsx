@@ -13,7 +13,11 @@ import { UnitsPage } from './components/settings/UnitsPage';
 import { SuppliersPage } from './components/settings/SuppliersPage';
 import { RolesPage } from './components/settings/RolesPage';
 import { ProductsPage } from './components/settings/ProductsPage';
-import { ReportsPage } from './pages/reports/ReportsPage';
+//import { ReportsPage } from './pages/reports/ReportsPage';
+import { ReportsLayout } from './components/reports/ReportsLayout';
+import { SalesReport } from './pages/reports/SalesReport';
+import { ProfitsReport } from './pages/reports/ProfitsReport';
+import { MovementsReport } from './pages/reports/MovementsReport';
 import { InventoryPage } from './pages/inventory/InventoryPage'
 import { SalesPage } from './pages/sales/SalesPage';
 
@@ -35,7 +39,10 @@ function App() {
           <Route path="settings/proveedores" element={<SuppliersPage />} />
           <Route path="settings/roles" element={<RolesPage />} />
           <Route path="settings/productos" element={<ProductsPage />} />
-          <Route path="reports" element={<ReportsPage />} />
+          <Route path="reports" element={<ReportsLayout />} />
+          <Route path="reports/movements" element={<MovementsReport />} />
+          <Route path="reports/sales" element={<SalesReport />} />
+          <Route path="reports/profits" element={<ProfitsReport />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="sales" element={<SalesPage />} />
         </Route>

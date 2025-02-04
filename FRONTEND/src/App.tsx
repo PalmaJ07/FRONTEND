@@ -44,6 +44,8 @@ function App() {
           <Route path="reports" element={<ReportsPage />} />
           <Route path="inventory" element={<InventoryPage />} />
           <Route path="sales" element={isAdmin ? <SalesPageAdmin /> : <SalesPage />} />
+          <Route path="sales1" element={<SalesPageAdmin />} />
+          
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

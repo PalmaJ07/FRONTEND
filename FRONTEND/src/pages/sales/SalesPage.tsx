@@ -9,10 +9,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useProfile } from '../../hooks/useProfile';
 import { createConfigService } from '../../services/config';
 import { Pagination } from '../../components/common/Pagination';
-import Swal from 'sweetalert2';
 import { salesService } from '../../services/sales';
 import { format } from 'date-fns';
-
+import Swal from 'sweetalert2';
 
 const storageService = createConfigService('almacen');
 type DiscountType = 'percentage' | 'amount' | 'none';

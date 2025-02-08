@@ -184,7 +184,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
           onClick={() => selectedWarehouse && setShowProductSearch(true)}
           className={`w-full px-3 py-2 border border-gray-300 rounded-md ${
             !selectedWarehouse ? 'bg-gray-100 cursor-not-allowed' : 'cursor-pointer hover:border-blue-500'
-          }`}
+          } text-gray-900`} // Añadido text-gray-900 para asegurar visibilidad
         >
           {selectedProduct 
             ? selectedProduct.producto
@@ -215,7 +215,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
                 <div
                   key={product.id}
                   onClick={() => handleProductSelect(product)}
-                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-900" // Añadido text-gray-900
                 >
                   {product.producto}
                 </div>
@@ -266,8 +266,8 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
               id="unidades_por_presentacion"
               name="unidades_por_presentacion"
               value={formData.unidades_por_presentacion}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-              readOnly
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </>
@@ -282,8 +282,8 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
           id="fecha"
           name="fecha"
           value={formData.fecha}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-          readOnly
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect} from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import { Search, ShoppingCart, Trash2, Percent, Coins, Store, UserPlus } from 'lucide-react';
 import { ProductDetail } from '../../types/sales';
 import { searchProducts } from '../../services/sales';
@@ -21,7 +21,7 @@ interface ProductWithDiscount extends ProductDetail {
 }
 
 export function SalesPageAdmin() {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const { profile, isLoading: isProfileLoading } = useProfile();
   
   // Estados para la búsqueda y selección de productos
@@ -127,25 +127,25 @@ export function SalesPageAdmin() {
 
   // Filtrar clientes basado en la búsqueda
   // Modificar el efecto de búsqueda de clientes
-useEffect(() => {
-  const searchClients = async () => {
-    if (!isExistingClient) return;
+  useEffect(() => {
+    const searchClients = async () => {
+      if (!isExistingClient) return;
 
-    try {
-      setIsSearching(true);
-      const response = await getClientList(1, 100, debouncedClientSearch);
-      setClientSearchResults(response.clients);
-      setSelectedIndex(-1);
-    } catch (error) {
-      console.error('Error searching clients:', error);
-      setClientSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+      try {
+        setIsSearching(true);
+        const response = await getClientList(1, 100, debouncedClientSearch);
+        setClientSearchResults(response.clients);
+        setSelectedIndex(-1);
+      } catch (error) {
+        console.error('Error searching clients:', error);
+        setClientSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
-  searchClients();
-}, [debouncedClientSearch, isExistingClient]);
+    searchClients();
+  }, [debouncedClientSearch, isExistingClient]);
 
 
   // Agregar efecto para el click fuera
@@ -320,8 +320,9 @@ useEffect(() => {
   };
 
   const handleAddNewClient = () => {
-    navigate('/index/users/clients');
+    window.open('/index/users/clients', '_blank');
   };
+  
 
   const handleRemoveProduct = (productId: string) => {
     setSelectedProducts(prev => prev.filter(p => p.encrypted_id !== productId));
@@ -341,7 +342,6 @@ useEffect(() => {
     }
   };
   
-
   const handleProductDiscountChange = (
     productId: string,
     discountType: DiscountType,
@@ -447,11 +447,12 @@ useEffect(() => {
                     onClick={() => handleProductSelect(product)}
                     className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                   >
-                    <div className="grid grid-cols-4 gap-2 text-sm">
-                      <div className="font-medium">{product.n_producto}</div>
-                      <div>Stock: {product.total_unidades}</div>
-                      <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
-                      <div>Precio: C${product.precio_venta_unidades}</div>
+                    <div className="grid grid-cols-5 gap-2 text-sm">
+                              <div className="font-medium">{product.n_producto}</div>
+                              <div>Unidades: {product.total_unidades}</div>
+                              <div>Presentación: {product.cantidad_por_presentacion}</div>
+                              <div>Vence: {product.fecha_expiracion || 'N/A'}</div>
+                              <div>Precio: C${product.precio_venta_unidades}</div>
                     </div>
                   </div>
                 ))
@@ -464,7 +465,7 @@ useEffect(() => {
           )}
         </div>
       </div>
-
+{/* --------------------------------------- */}
       <div className="grid grid-cols-12 gap-6 mt-6">
         {/* Sección de productos seleccionados */}
         <div className="col-span-8">

@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import { LoginForm } from '../components/LoginForm';
 import { login } from '../services/auth';
 import Swal from 'sweetalert2';
 
 export function LoginPage() {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (username: string, password: string) => {
@@ -21,8 +21,11 @@ export function LoginPage() {
         icon: 'success',
         timer: 1500,
         showConfirmButton: false
+       
       });
-      navigate('/index');
+      
+      window.location.href = '/index';
+       // 🔄 Recargar la página después de navegar
     } catch (error: any) {
       console.error('Login handler error:', error);
       await Swal.fire({

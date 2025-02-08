@@ -50,8 +50,10 @@ function App() {
           <Route path="reports/sales" element={<SalesReport />} />
           <Route path="reports/profits" element={<ProfitsReport />} />
           <Route path="inventory" element={<InventoryPage />} />
-          <Route path="sales" element={isAdmin ? <SalesPageAdmin /> : <SalesPage />} />
-          <Route path="sales1" element={<SalesPageAdmin />} />
+          <Route path="sales" element={isAdmin ? <SalesPageAdmin /> : 
+          
+          <SalesPage />} />
+          
           
         </Route>
         <Route path="/" element={<Navigate to="/login" replace />} />

@@ -7,15 +7,10 @@ import {
   SalesResponse,
   SaleDetail,
   ApiSaleDetail,
-<<<<<<< HEAD
   SaleDetailsResponse,
   CreateSaleData,
   CreateSaleDetailData
- } from '../types/sales';
-=======
-  SaleDetailsResponse
 } from '../types/sales';
->>>>>>> 5b3af895c194f670a116a4a9add5553bb23babb4
 
 export const searchProducts = async (search: string, almacenId: number): Promise<ProductDetail[]> => {
   const params = new URLSearchParams({
@@ -90,7 +85,6 @@ export const salesService = {
       `/api/ventas/indexDetalleVenta/?venta=${saleId}`
     );
     return response.data.config.map(mapApiSaleDetailToSaleDetail);
-<<<<<<< HEAD
   },
 
   createSale: async (data: CreateSaleData): Promise<{ id: number; encrypted_id: string }> => {
@@ -127,7 +121,5 @@ export const salesService = {
       console.error('Error creating sale:', error);
       throw error;
     }
-=======
->>>>>>> 5b3af895c194f670a116a4a9add5553bb23babb4
   }
 };

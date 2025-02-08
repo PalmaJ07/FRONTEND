@@ -393,6 +393,7 @@ export function SalesPageAdmin() {
     return isNaN(total) ? 0 : total;
   };
 
+  
   return (
     <div className="p-6">
       <div className="max-w-[calc(100%-384px)] mb-6">
@@ -717,14 +718,40 @@ export function SalesPageAdmin() {
                   )}
                 </div>
               </div>
-
+              {/* Comentario */}
+              <div>
+                <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
+                  Comentario
+                </label>
+                <input
+                  className={`w-full px-3 py-2 border border-gray-300
+                    rounded-md focus:ring-2 focus:ring-blue-500`}
+                  placeholder='Comentario'
+                  type='text'
+                />
+              </div>
+              {/*Fecha Venta*/}
+              <div>
+                <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
+                  Fecha de Ingreso
+                </label>
+                <input
+                  type="date"
+                  id="fecha_ingreso"
+                  name="fecha_ingreso"
+                  //value={formData.fecha_ingreso}
+                  //onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {/* Total */}
               <div className="pt-4 border-t">
                 <div className="flex justify-between text-xl font-bold">
                   <span>Total:</span>
                   <span>C${calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
-
+              {/* Procesar Venta */}
               <button
                 className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium mt-6"
                 disabled={selectedProducts.length === 0 || !clientName.trim()}

@@ -9,6 +9,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { useProfile } from '../../hooks/useProfile';
 import { createConfigService } from '../../services/config';
 import { Pagination } from '../../components/common/Pagination';
+import Swal from 'sweetalert2';
+import { salesService } from '../../services/sales';
+import { format } from 'date-fns';
 
 
 const storageService = createConfigService('almacen');
@@ -223,6 +226,10 @@ export function SalesPage() {
   const [showProductsModal, setShowProductsModal] = useState(false);
   
   const [products, setProducts] = useState<ProductDetail[]>([]);
+
+  // Agregar estos estados para el formulario
+  const [comment, setComment] = useState('');
+  const [saleDate, setSaleDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   //*******************EFECTOS *******************/
   // Efecto para manejar clics fuera de los contenedores
@@ -542,6 +549,91 @@ export function SalesPage() {
     setShowProductsModal(false);
     setShowWarehouseModal(true);
   };
+
+  // Agregar esta función para procesar la venta
+const handleProcessSale = async () => {
+  if (selectedProducts.length === 0) {
+    Swal.fire({
+      title: 'Error',
+      text: 'Debe seleccionar al menos un producto',
+      icon: 'error'
+    });
+    return;
+  }
+
+  if (!clientName.trim()) {
+    Swal.fire({
+      title: 'Error',
+      text: 'Debe ingresar el nombre del cliente',
+      icon: 'error'
+    });
+    return;
+  }
+
+  try {
+    // 1. Preparar datos de la venta principal
+    const saleData = {
+      cliente: selectedClient?.id ? parseInt(atob(selectedClient.id)) : null,
+      cliente_nombre: selectedClient ? null : clientName,
+      total_sin_descuento: calculateSubtotal(),
+      descuento: globalDiscountValue,
+      descuento_porcentual: globalDiscountType === 'percentage',
+      total_venta: calculateTotal(),
+      fecha_venta: saleDate,
+      comentario: comment || null
+    };
+
+    // 2. Crear la venta principal
+    const response = await salesService.createSale(saleData);
+    const ventaId = response.id;
+
+    // 3. Crear los detalles de la venta
+    const detailPromises = selectedProducts.map(async (product) => {
+      const detailData = {
+        producto_detalle: parseInt(atob(product.encrypted_id)),
+        venta: ventaId,
+        descuento: product.discountValue,
+        cantidad: quantities[product.encrypted_id] || 1,
+        unidades: product.unitType === 'units',
+        descuento_porcentual: product.discountType === 'percentage',
+        precio_venta: product.unitType === 'presentation' 
+          ? parseFloat(product.precio_venta_presentacion)
+          : parseFloat(product.precio_venta_unidades)
+      };
+
+      return salesService.createSaleDetail(detailData);
+    });
+
+    await Promise.all(detailPromises);
+
+    // 4. Mostrar mensaje de éxito
+    await Swal.fire({
+      title: 'Éxito',
+      text: 'Venta procesada correctamente',
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    // 5. Limpiar el formulario
+    setSelectedProducts([]);
+    setQuantities({});
+    setClientName('');
+    setSelectedClient(null);
+    setGlobalDiscountType('none');
+    setGlobalDiscountValue(0);
+    setComment('');
+    setSaleDate(format(new Date(), 'yyyy-MM-dd'));
+
+  } catch (error) {
+    console.error('Error processing sale:', error);
+    await Swal.fire({
+      title: 'Error',
+      text: 'No se pudo procesar la venta',
+      icon: 'error'
+    });
+  }
+};
 //CORREGIR APARTIR DE AQUI EN LINEA 548
   return (
     <div className="p-6">
@@ -860,7 +952,36 @@ export function SalesPage() {
                         )}
                       </div>
                     </div>
-      
+
+                    {/* Comentario */}
+                    <div>
+                      <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
+                        Comentario
+                      </label>
+                      <input
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}  
+                        className={`w-full px-3 py-2 border border-gray-300
+                          rounded-md focus:ring-2 focus:ring-blue-500`}
+                        placeholder='Comentario'
+                        type='text'
+                      />
+                    </div>
+                    {/*Fecha Venta*/}
+                    <div>
+                      <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de Ingreso
+                      </label>
+                      <input
+                        type="date"
+                        id="fecha_ingreso"
+                        name="fecha_ingreso"
+                        value={saleDate}
+                        onChange={(e) => setSaleDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    {/* Total */} 
                     <div className="pt-4 border-t">
                       <div className="flex justify-between text-xl font-bold">
                         <span>Total:</span>
@@ -869,6 +990,7 @@ export function SalesPage() {
                     </div>
       
                     <button
+                      onClick={handleProcessSale}
                       className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg font-medium mt-6"
                       disabled={selectedProducts.length === 0 || !clientName.trim()}
                     >

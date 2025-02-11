@@ -41,6 +41,21 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
     allowedRoles: ['Root', 'Administrador', 'Reportes'],
     defaultForRoles: ['Reportes']
   },
+  {
+    path: '/index/reports/movements',
+    allowedRoles: ['Root', 'Administrador', 'Reportes'],
+    defaultForRoles: ['Reportes']
+  },
+  {
+    path: '/index/reports/sales',
+    allowedRoles: ['Root', 'Administrador', 'Reportes'],
+    defaultForRoles: ['Reportes']
+  },
+  {
+    path: '/index/reports/profits',
+    allowedRoles: ['Root', 'Administrador', 'Reportes'],
+    defaultForRoles: ['Reportes']
+  },
   // Settings
   {
     path: '/index/settings',

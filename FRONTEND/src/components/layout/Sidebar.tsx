@@ -1,8 +1,20 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Users, Package, ShoppingCart, Settings, FileText } from 'lucide-react';
+import { useProfile } from '../../hooks/useProfile';
+import { hasPermission } from '../../config/permissions';
 
-const menuItems = [
+interface MenuItem {
+  icon: React.ElementType;
+  label: string;
+  path?: string;
+  subItems?: {
+    label: string;
+    path: string;
+  }[];
+}
+
+const menuItems: MenuItem[] = [
   { icon: Home, label: 'Inicio', path: '/index' },
   {
     icon: Users,
@@ -20,12 +32,29 @@ const menuItems = [
 
 export function Sidebar() {
   const [expandedItem, setExpandedItem] = React.useState<string | null>(null);
+  const { profile } = useProfile();
+  //const location = useLocation();
+
+  if (!profile) return null;
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (item.path) {
+      return hasPermission(item.path, profile.user_type);
+    }
+    if (item.subItems) {
+      const hasPermittedSubItems = item.subItems.some(subItem => 
+        hasPermission(subItem.path, profile.user_type)
+      );
+      return hasPermittedSubItems;
+    }
+    return false;
+  });
 
   return (
     <aside className="bg-gray-800 text-white w-64 min-h-screen p-4">
       <div className="text-xl font-bold mb-8 pl-4">Mi Dashboard</div>
       <nav>
-        {menuItems.map((item) => (
+        {filteredMenuItems.map((item) => (
           <div key={item.label} className="mb-2">
             {item.subItems ? (
               <div>
@@ -38,25 +67,27 @@ export function Sidebar() {
                 </button>
                 {expandedItem === item.label && (
                   <div className="ml-8 mt-2 space-y-2">
-                    {item.subItems.map((subItem) => (
-                      <NavLink
-                        key={subItem.path}
-                        to={subItem.path}
-                        className={({ isActive }) =>
-                          `block p-2 rounded-lg hover:bg-gray-700 transition-colors ${
-                            isActive ? 'bg-gray-700' : ''
-                          }`
-                        }
-                      >
-                        {subItem.label}
-                      </NavLink>
-                    ))}
+                    {item.subItems
+                      .filter(subItem => hasPermission(subItem.path, profile.user_type))
+                      .map((subItem) => (
+                        <NavLink
+                          key={subItem.path}
+                          to={subItem.path}
+                          className={({ isActive }) =>
+                            `block p-2 rounded-lg hover:bg-gray-700 transition-colors ${
+                              isActive ? 'bg-gray-700' : ''
+                            }`
+                          }
+                        >
+                          {subItem.label}
+                        </NavLink>
+                      ))}
                   </div>
                 )}
               </div>
             ) : (
               <NavLink
-                to={item.path}
+                to={item.path!}
                 className={({ isActive }) =>
                   `flex items-center p-3 rounded-lg hover:bg-gray-700 transition-colors ${
                     isActive ? 'bg-gray-700' : ''

@@ -969,7 +969,7 @@ const handleProcessSale = async () => {
                     {/*Fecha Venta*/}
                     <div>
                       <label htmlFor="fecha_ingreso" className="block text-sm font-medium text-gray-700 mb-1">
-                        Fecha de Ingreso
+                        Fecha de Venta
                       </label>
                       <input
                         type="date"

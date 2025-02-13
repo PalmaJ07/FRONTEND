@@ -133,10 +133,10 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-3 gap-4">
-        {/* Primera fila */}
-        <div>
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-6xl mx-auto">
+      {/* Fila 1 */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="space-y-2">
           <label htmlFor="almacen" className="block text-sm font-medium text-gray-700 mb-1">
             Almacén
           </label>
@@ -145,7 +145,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             name="almacen"
             value={formData.almacen}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="-1">Seleccione</option>
@@ -157,17 +157,17 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
           </select>
         </div>
 
-        <div className="product-search-container relative">
+        <div className="space-y-2 product-search-container relative">
           <label htmlFor="producto" className="block text-sm font-medium text-gray-700 mb-1">
             Producto
           </label>
           <div
             onClick={() => setShowProductSearch(true)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:border-blue-500"
           >
             {formData.producto !== -1 
               ? getProductName(formData.producto)
-              : 'Seleccione producto'}
+              : ' Producto'}
           </div>
 
           {showProductSearch && (
@@ -204,7 +204,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
           )}
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label htmlFor="config_unidad_medida" className="block text-sm font-medium text-gray-700 mb-1">
             Unidad de Medida
           </label>
@@ -213,7 +213,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             name="config_unidad_medida"
             value={formData.config_unidad_medida}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="-1">Seleccione</option>
@@ -224,9 +224,11 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             ))}
           </select>
         </div>
+      </div>
 
-        {/* Segunda fila */}
-        <div>
+      {/* Fila 2 */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="space-y-2">
           <label htmlFor="peso" className="block text-sm font-medium text-gray-700 mb-1">
             Peso
           </label>
@@ -237,12 +239,12 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             value={formData.peso}
             onChange={handleChange}
             step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label htmlFor="config_presentacion_producto" className="block text-sm font-medium text-gray-700 mb-1">
             Presentación
           </label>
@@ -251,7 +253,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             name="config_presentacion_producto"
             value={formData.config_presentacion_producto}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="-1">Seleccione</option>
@@ -263,7 +265,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
           </select>
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label htmlFor="unidades_por_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
             Unidades por Presentación
           </label>
@@ -273,13 +275,15 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             name="unidades_por_presentacion"
             value={formData.unidades_por_presentacion}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
+      </div>
 
-        {/* Tercera fila */}
-        <div>
+      {/* Fila 3 */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="space-y-2">
           <label htmlFor="precio_venta_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
             Precio Venta Presentación
           </label>
@@ -290,12 +294,12 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             value={formData.precio_venta_presentacion}
             onChange={handleChange}
             step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label htmlFor="precio_venta_unidades" className="block text-sm font-medium text-gray-700 mb-1">
             Precio Venta Unidades
           </label>
@@ -306,12 +310,12 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             value={formData.precio_venta_unidades}
             onChange={handleChange}
             step="0.01"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           />
         </div>
 
-        <div>
+        <div className="space-y-2">
           <label htmlFor="proveedor" className="block text-sm font-medium text-gray-700 mb-1">
             Proveedor
           </label>
@@ -320,7 +324,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
             name="proveedor"
             value={formData.proveedor}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="-1">Seleccione</option>
@@ -333,6 +337,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
         </div>
       </div>
 
+      {/* Botones */}
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
@@ -349,5 +354,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
         </button>
       </div>
     </form>
+
+
   );
 }

@@ -69,6 +69,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
         );
         setProducts(response.items);
         setFilteredProducts(response.items);
+        console.log("soy el console: ", response.items);
       } catch (error) {
         console.error('Error loading products:', error);
       } finally {
@@ -106,7 +107,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
     setSelectedProduct(product);
     setFormData(prev => ({
       ...prev,
-      producto_detalle: product.id,
+      producto_detalle: product.producto,
       unidades_por_presentacion: product.unidades_por_presentacion,
       fecha_expiracion: product.fecha_expiracion || ''
     }));
@@ -187,7 +188,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
           } text-gray-900`} // Añadido text-gray-900 para asegurar visibilidad
         >
           {selectedProduct 
-            ? selectedProduct.producto
+            ? selectedProduct.n_producto
             : 'Seleccione un producto'}
         </div>
 
@@ -215,9 +216,9 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
                 <div
                   key={product.id}
                   onClick={() => handleProductSelect(product)}
-                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer text-gray-900" // Añadido text-gray-900
+                  className="px-3 py-2 hover:bg-gray-400 cursor-pointer text-gray-700" // Añadido text-gray-900
                 >
-                  {product.producto}
+                  {product.n_producto}
                 </div>
               ))}
             </div>

@@ -24,6 +24,7 @@ const mapApiProductDetailToProductDetail = (apiDetail: ApiProductDetail): Produc
   precio_venta_unidades: apiDetail.precio_venta_unidades,
   proveedor: apiDetail.proveedor,
   fecha_expiracion: apiDetail.fecha_expiracion,
+  n_producto: apiDetail.n_producto
 });
 
 export const inventoryService = {
@@ -33,6 +34,7 @@ export const inventoryService = {
     search?: string,
     almacen?: string,
     producto?: string,
+    n_producto?: string,
   ) => {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -49,6 +51,9 @@ export const inventoryService = {
 
     if (producto !== undefined) {
       params.append('producto', producto.toString());
+    }
+    if (n_producto !== undefined) {
+      params.append('n_producto', n_producto.toString());
     }
 
     const response = await api.get<ProductDetailResponse>(

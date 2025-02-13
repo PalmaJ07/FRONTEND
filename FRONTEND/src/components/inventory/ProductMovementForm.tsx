@@ -207,7 +207,9 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
         producto_detalle: parseInt(atob(detailId)).toString(),
         precio_compra_presentacion: detail.precio_venta_presentacion,
         precio_compra_unidades: detail.precio_venta_unidades,
-        unidades_por_presentacion: detail.unidades_por_presentacion
+        unidades_por_presentacion: detail.unidades_por_presentacion,
+        cantidad_por_presentacion: detail.cantidad_por_presentacion,
+        fecha_expiracion: detail.fecha_expiracion
       }));
     }
   };
@@ -386,10 +388,9 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
             id="cantidad_por_presentacion"
             name="cantidad_por_presentacion"
             value={formData.cantidad_por_presentacion}
-            onChange={(e) => setFormData(prev => ({ ...prev, cantidad_por_presentacion: parseFloat(e.target.value) }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, cantidad_por_presentacion: e.target.value }))}
             min="1"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
           />
         </div>
 
@@ -401,8 +402,9 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
           <input
             type="number"
             id="unidades_por_presentacion"
-            //value={formData.unidades_por_presentacion}
-            onChange={(e) => setFormData(prev => ({ ...prev, unidades_por_presentacion: parseFloat(e.target.value) }))}
+            value={formData.unidades_por_presentacion}
+            onChange={(e) => setFormData(prev => ({ ...prev, unidades_por_presentacion: e.target.value }))}
+            min="1"
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -418,8 +420,10 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
             type="number"
             id="precio_compra_presentacion"
             value={formData.precio_compra_presentacion}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-            readOnly
+            onChange={(e) => setFormData(prev => ({ ...prev, precio_compra_presentacion: e.target.value }))}
+            min="1"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          
           />
         </div>
 
@@ -432,8 +436,10 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
             type="number"
             id="precio_compra_unidades"
             value={formData.precio_compra_unidades}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-            readOnly
+            onChange={(e) => setFormData(prev => ({ ...prev, precio_compra_unidades: e.target.value }))}
+            min="1"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            
           />
         </div>
       </div>
@@ -470,8 +476,9 @@ export function ProductMovementForm({ onSubmit, onCancel }: ProductMovementFormP
             type="date"
             id="fecha_ingreso"
             value={formData.fecha_ingreso}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-            readOnly
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+            
           />
         </div>
       </div>

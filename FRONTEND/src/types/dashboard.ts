@@ -14,3 +14,10 @@ export interface TopProduct {
     topProducts: TopProduct[];
     topUsers: TopUser[];
   }
+
+  export interface DailyProfits {
+    fecha: string;
+    total_ventas: number;
+    total_costos: number;
+    ganancias: number;
+  }

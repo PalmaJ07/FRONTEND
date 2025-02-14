@@ -8,23 +8,31 @@ import { Table } from '../../components/common/Table';
 import { Movement, DateRange } from '../../types/reports';
 import { reportsService } from '../../services/reports';
 import { useProfile } from '../../hooks/useProfile';
+import { toZonedTime } from 'date-fns-tz';
 
 export function MovementsReport() {
+
+  const getCurrentDate = () => {
+    const now = new Date();
+    const managua = toZonedTime(now, 'America/Managua');
+    return format(managua, 'yyyy-MM-dd'); // Devuelve la fecha actual en formato "yyyy-MM-dd"
+  };
+
   const [movements, setMovements] = useState<Movement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>(getCurrentDate()); // Establecer la fecha actual por defecto
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: '',
     endDate: ''
   });
-  const [isRangeMode, setIsRangeMode] = useState(false);
+  const [isRangeMode, setIsRangeMode] = useState(false); // Establecer que el modo predeterminado es "fecha única"
   const { profile } = useProfile();
 
+  
+
   useEffect(() => {
-    if (selectedDate || (dateRange.startDate && dateRange.endDate)) {
-      loadMovements();
-    }
-  }, [selectedDate, dateRange]);
+    loadMovements(); // Llamar a la API para cargar los movimientos con la fecha actual por defecto
+  }, [selectedDate, dateRange]); // Cargar los movimientos cada vez que cambien la fecha seleccionada o el rango de fechas
 
   const loadMovements = async () => {
     try {
@@ -53,7 +61,7 @@ export function MovementsReport() {
         [name]: value
       }));
     } else {
-      setSelectedDate(value);
+      setSelectedDate(value); // Actualiza la fecha seleccionada
     }
   };
 
@@ -131,7 +139,7 @@ export function MovementsReport() {
               value={isRangeMode ? 'range' : 'single'}
               onChange={(e) => {
                 setIsRangeMode(e.target.value === 'range');
-                setSelectedDate('');
+                setSelectedDate(getCurrentDate()); // Restablecer la fecha al valor actual cuando se cambia la opción
                 setDateRange({ startDate: '', endDate: '' });
               }}
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -166,15 +174,16 @@ export function MovementsReport() {
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
           )}
+        
+        <button
+          onClick={generatePDF}
+          disabled={movements.length === 0}
+          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <FileDown className="h-5 w-5 mr-2" />
+          Descargar PDF
+        </button>
 
-          <button
-            onClick={generatePDF}
-            disabled={movements.length === 0}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <FileDown className="h-5 w-5 mr-2" />
-            Descargar PDF
-          </button>
         </div>
 
         {isLoading ? (

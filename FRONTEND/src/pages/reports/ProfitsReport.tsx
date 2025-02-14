@@ -8,11 +8,20 @@ import { Table } from '../../components/common/Table';
 import { ProfitsReport as ProfitsReportType, DateRange } from '../../types/reports';
 import { reportsService } from '../../services/reports';
 import { useProfile } from '../../hooks/useProfile';
+import { toZonedTime } from 'date-fns-tz';
 
 export function ProfitsReport() {
+
+  const getCurrentDate = () => {
+      const now = new Date();
+      const managua = toZonedTime(now, 'America/Managua');
+      return format(managua, 'yyyy-MM-dd'); // Devuelve la fecha actual en formato "yyyy-MM-dd"
+    };
+
+
   const [profitsData, setProfitsData] = useState<ProfitsReportType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>(getCurrentDate);
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: '',
     endDate: ''
@@ -177,7 +186,7 @@ export function ProfitsReport() {
           <button
             onClick={generatePDF}
             disabled={!profitsData}
-            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileDown className="h-5 w-5 mr-2" />
             Exportar PDF

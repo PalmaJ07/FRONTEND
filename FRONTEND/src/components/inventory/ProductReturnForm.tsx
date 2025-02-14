@@ -103,11 +103,16 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
     }));
   };
 
+
   const handleProductSelect = (product: ProductDetail) => {
+    
+    const decodedId = atob(product.id);
+    const parsedId = isNaN(decodedId) ? 0 : parseInt(decodedId);
+    
     setSelectedProduct(product);
     setFormData(prev => ({
       ...prev,
-      producto_detalle: product.producto,
+      producto_detalle: parsedId,
       unidades_por_presentacion: product.unidades_por_presentacion,
       fecha_expiracion: product.fecha_expiracion || ''
     }));

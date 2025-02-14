@@ -273,8 +273,9 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
               name="unidades_por_presentacion"
               value={formData.unidades_por_presentacion}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               min="1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              
             />
           </div>
         </>

@@ -424,7 +424,7 @@ export function SalesPage() {
             ...product,
             discountType: 'none',
             discountValue: 0,
-            unitType: 'units' // Por defecto en presentación
+            unitType: 'units'  // Por defecto en presentación
           }]);
           setQuantities(prev => ({
             ...prev,
@@ -435,7 +435,7 @@ export function SalesPage() {
         setShowSearchResults(false);
     };
 
-    const handleUnitTypeChange = (productId: string, unitType: 'presentation' | 'units') => {
+    const handleUnitTypeChange = (productId: string, unitType: 'units' | 'presentation') => {
       setSelectedProducts(prev => prev.map(product => {
         if (product.encrypted_id === productId) {
           return {
@@ -593,7 +593,7 @@ const handleProcessSale = async () => {
         venta: ventaId,
         descuento: product.discountValue,
         cantidad: quantities[product.encrypted_id] || 1,
-        unidades: product.unitType === 'units',
+        unidades: product.unitType === 'presentation',
         descuento_porcentual: product.discountType === 'percentage',
         precio_venta: product.unitType === 'presentation' 
           ? parseFloat(product.precio_venta_presentacion)
@@ -623,7 +623,7 @@ const handleProcessSale = async () => {
     setGlobalDiscountValue(0);
     setComment('');
     setSaleDate(format(new Date(), 'yyyy-MM-dd'));
-
+    
   } catch (error) {
     console.error('Error processing sale:', error);
     await Swal.fire({
@@ -722,7 +722,12 @@ const handleProcessSale = async () => {
                               <div>
                                 <h3 className="font-medium text-sm">{product.n_producto}</h3>
                                 <p className="text-xs text-gray-600">
-                                Precio unitario: C${product.precio_venta_unidades}
+                                  {/* Mostrar precio dependiendo de la selección */}
+                                  {product.unitType === 'units' ? (
+                                    <>Precio unitario: C${product.precio_venta_unidades}</>
+                                  ) : (
+                                    <>Precio por Presentación: C${product.precio_venta_presentacion}</>
+                                  )}
                                 </p>
                               </div>
                               <button
@@ -748,7 +753,7 @@ const handleProcessSale = async () => {
                                 />
                               </div>
       
-                              {/* Descuento (ahora más grande) */}
+                               {/* Descuento (ahora más grande) */}
                               <div className="flex flex-col">
                                 <label className="text-xs font-medium text-gray-700 mb-1">
                                   Descuento
@@ -765,24 +770,50 @@ const handleProcessSale = async () => {
                                     }
                                     className="w-36 p-1.5 text-sm border border-gray-300 rounded"
                                   >
-                                    <option value="none" >Sin descuento</option>
+                                    <option value="none">Sin descuento</option>
                                     <option value="percentage" value-type="1">Porcentaje</option>
                                     <option value="amount" value-type="0">Monto</option>
                                   </select>
                                   {product.discountType !== 'none' && (
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      value={product.discountValue}
-                                      onChange={(e) =>
-                                        handleProductDiscountChange(
-                                          product.encrypted_id,
-                                          product.discountType,
-                                          parseFloat(e.target.value)
-                                        )
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    // Si el tipo de descuento es porcentaje, max será 100, si es monto será el precio correspondiente
+                                    max={product.discountType === 'percentage' ? 100 : (product.unitType === 'units' ? product.precio_venta_unidades : product.precio_venta_presentacion)}
+                                    value={product.discountValue}
+                                    onChange={(e) => {
+                                      // Verifica si el valor está vacío
+                                      let value = e.target.value.trim() === '' ? 0 : parseFloat(e.target.value);
+                                  
+                                      // Si el valor es NaN o menor que 0, se ajusta a 0
+                                      if (isNaN(value) || value < 0) {
+                                        value = 0;
                                       }
-                                      className="w-28 p-1.5 text-sm border border-gray-300 rounded"
-                                    />
+                                  
+                                      // Lógica para tipo de descuento "monto"
+                                      if (product.discountType === 'amount') {
+                                        // Si el valor es mayor que el precio correspondiente, se ajusta al precio
+                                        const maxPrice = product.unitType === 'units' ? product.precio_venta_unidades : product.precio_venta_presentacion;
+                                        if (value > maxPrice) {
+                                          value = maxPrice;
+                                        }
+                                      } else if (product.discountType === 'percentage') {
+                                        // Lógica para tipo de descuento "porcentaje"
+                                        if (value > 100) {
+                                          value = 100; // No puede ser mayor que 100%
+                                        }
+                                      }
+                                  
+                                      // Llama a la función de cambio de descuento para actualizar el valor
+                                      handleProductDiscountChange(
+                                        product.encrypted_id,
+                                        product.discountType,
+                                        value
+                                      );
+                                    }}
+                                    className="w-28 p-1.5 text-sm border border-gray-300 rounded"
+                                  />
+                                
                                   )}
                                 </div>
                               </div>
@@ -793,7 +824,7 @@ const handleProcessSale = async () => {
                                   Unidades de Venta
                                 </label>
                                 <select
-                                  value={product.unitType || "units"} // ✅ Ahora "Por Unidades" es el valor predeterminado
+                                  value={product.unitType || "units" } // ✅ Ahora "Por Unidades" es el valor predeterminado
                                   onChange={(e) =>
                                     handleUnitTypeChange(
                                       product.encrypted_id,
@@ -916,6 +947,7 @@ const handleProcessSale = async () => {
                       <span>C${calculateSubtotal().toFixed(2)}</span>
                     </div>
       
+                    {/* Descuento Global */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Descuento Global
@@ -936,8 +968,30 @@ const handleProcessSale = async () => {
                               <input
                                 type="number"
                                 min="0"
+                                max={globalDiscountType === 'percentage' ? 100 : calculateSubtotal()}  // máximo 100 para porcentaje, el subtotal para monto
                                 value={globalDiscountValue}
-                                onChange={(e) => setGlobalDiscountValue(parseFloat(e.target.value))}
+                                onChange={(e) => {
+                                // Verifica si el valor está vacío o no es un número
+                                let value = e.target.value.trim() === '' ? 0 : parseFloat(e.target.value);
+
+                                // Si el valor es NaN o menor que 0, se ajusta a 0
+                                if (isNaN(value) || value < 0) {
+                                value = 0;
+                                }
+
+                                // Si el tipo de descuento es porcentaje, limita el valor a 100
+                                if (globalDiscountType === 'percentage' && value > 100) {
+                                value = 100;
+                                }
+
+                                // Si el tipo de descuento es monto, asegura que no sea mayor al subtotal
+                                if (globalDiscountType === 'amount' && value > calculateSubtotal()) {
+                                value = calculateSubtotal();
+                                }
+
+                                // Establece el valor validado en el estado
+                                setGlobalDiscountValue(value);
+                                }}
                                 className="w-full p-2 border border-gray-300 rounded pl-8"
                               />
                               <span className="absolute left-2 top-2">

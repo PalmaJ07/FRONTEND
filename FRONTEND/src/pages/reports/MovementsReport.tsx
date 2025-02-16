@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { FileDown, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -11,28 +11,25 @@ import { useProfile } from '../../hooks/useProfile';
 import { toZonedTime } from 'date-fns-tz';
 
 export function MovementsReport() {
-
   const getCurrentDate = () => {
     const now = new Date();
     const managua = toZonedTime(now, 'America/Managua');
-    return format(managua, 'yyyy-MM-dd'); // Devuelve la fecha actual en formato "yyyy-MM-dd"
+    return format(managua, 'yyyy-MM-dd');
   };
 
   const [movements, setMovements] = useState<Movement[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(getCurrentDate()); // Establecer la fecha actual por defecto
+  const [selectedDate, setSelectedDate] = useState<string>(getCurrentDate());
   const [dateRange, setDateRange] = useState<DateRange>({
     startDate: '',
     endDate: ''
   });
-  const [isRangeMode, setIsRangeMode] = useState(false); // Establecer que el modo predeterminado es "fecha única"
+  const [isRangeMode, setIsRangeMode] = useState(false);
   const { profile } = useProfile();
 
-  
-
   useEffect(() => {
-    loadMovements(); // Llamar a la API para cargar los movimientos con la fecha actual por defecto
-  }, [selectedDate, dateRange]); // Cargar los movimientos cada vez que cambien la fecha seleccionada o el rango de fechas
+    loadMovements();
+  }, [selectedDate, dateRange]);
 
   const loadMovements = async () => {
     try {
@@ -61,7 +58,7 @@ export function MovementsReport() {
         [name]: value
       }));
     } else {
-      setSelectedDate(value); // Actualiza la fecha seleccionada
+      setSelectedDate(value);
     }
   };
 
@@ -91,8 +88,8 @@ export function MovementsReport() {
       movement.producto_detalle_destino,
       movement.cantidad_por_presentacion.toString(),
       movement.unidades_por_presentacion.toString(),
-      format(new Date(movement.fecha), 'dd/MM/yyyy'),
-      format(new Date(movement.fecha_expiracion), 'dd/MM/yyyy')
+      format(addDays(new Date(movement.fecha), 1), 'dd/MM/yyyy'),
+      format(addDays(new Date(movement.fecha_expiracion), 1), 'dd/MM/yyyy')
     ]);
 
     (doc as any).autoTable({
@@ -115,12 +112,12 @@ export function MovementsReport() {
     { 
       header: 'Fecha', 
       accessor: 'fecha' as keyof Movement,
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy')
+      render: (value: string) => format(addDays(new Date(value), 1), 'dd/MM/yyyy')
     },
     { 
       header: 'Fecha Exp.', 
       accessor: 'fecha_expiracion' as keyof Movement,
-      render: (value: string) => format(new Date(value), 'dd/MM/yyyy')
+      render: (value: string) => format(addDays(new Date(value), 1), 'dd/MM/yyyy')
     },
   ];
 
@@ -129,7 +126,7 @@ export function MovementsReport() {
       <PageHeader title="Reporte de Movimientos" />
       
       <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-6 mb-6">
+        <div className="flex items-center space-x-4 mb-6">
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-gray-500" />
             <label className="text-sm font-medium text-gray-700">
@@ -139,7 +136,7 @@ export function MovementsReport() {
               value={isRangeMode ? 'range' : 'single'}
               onChange={(e) => {
                 setIsRangeMode(e.target.value === 'range');
-                setSelectedDate(getCurrentDate()); // Restablecer la fecha al valor actual cuando se cambia la opción
+                setSelectedDate(getCurrentDate());
                 setDateRange({ startDate: '', endDate: '' });
               }}
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -174,16 +171,15 @@ export function MovementsReport() {
               className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
             />
           )}
-        
-        <button
-          onClick={generatePDF}
-          disabled={movements.length === 0}
-          className="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <FileDown className="h-5 w-5 mr-2" />
-          Descargar PDF
-        </button>
 
+          <button
+            onClick={generatePDF}
+            disabled={movements.length === 0}
+            className="ml-auto flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <FileDown className="h-5 w-5 mr-2" />
+            Descargar PDF
+          </button>
         </div>
 
         {isLoading ? (

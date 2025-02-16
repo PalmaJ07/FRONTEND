@@ -7,7 +7,7 @@ import {
   Package, 
   Scale, 
   Truck, 
-  ShieldCheck,
+  /*ShieldCheck,*/
   Box
 } from 'lucide-react';
 import { SettingsCard } from './SettingsCard';
@@ -49,12 +49,12 @@ const menuItems = [
     description: 'Gestiona los proveedores del sistema',
     icon: Truck 
   },
-  { 
+  /*{ 
     path: '/index/settings/roles', 
     title: 'Roles',
     description: 'Configura los roles y permisos',
     icon: ShieldCheck 
-  },
+  },*/
   { 
     path: '/index/settings/productos', 
     title: 'Productos',

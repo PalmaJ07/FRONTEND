@@ -68,6 +68,7 @@ export interface ApiSale {
 export interface SaleDetail {
   id: string;
   productDetailId: number;
+  n_producto: string;
   saleId: number;
   discount: number;
   quantity: number;
@@ -80,6 +81,7 @@ export interface ApiSaleDetail {
   encrypted_id: string;
   id: number;
   producto_detalle: number;
+  n_producto: string;
   venta: number;
   descuento: number;
   cantidad: number;

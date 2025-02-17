@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, FileDown } from 'lucide-react';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
@@ -48,7 +48,7 @@ export function SaleDetailsModal({ isOpen, onClose, sale }: SaleDetailsModalProp
     
     // Add table with sale details
     const tableData = details.map(detail => [
-      detail.productDetailId.toString(),
+      detail.n_producto.toString(),
       detail.quantity.toString(),
       detail.isUnits ? 'Unidades' : 'Presentación',
       `C$${detail.salePrice.toFixed(2)}`,
@@ -153,7 +153,7 @@ export function SaleDetailsModal({ isOpen, onClose, sale }: SaleDetailsModalProp
                     {details.map((detail) => (
                       <tr key={detail.id}>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {detail.productDetailId}
+                          {detail.n_producto}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {detail.quantity}

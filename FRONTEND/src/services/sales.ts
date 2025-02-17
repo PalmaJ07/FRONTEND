@@ -44,6 +44,7 @@ const mapApiSaleToSale = (apiSale: ApiSale): Sale => ({
 const mapApiSaleDetailToSaleDetail = (apiDetail: ApiSaleDetail): SaleDetail => ({
   id: apiDetail.encrypted_id,
   productDetailId: apiDetail.producto_detalle,
+  n_producto: apiDetail.n_producto,
   saleId: apiDetail.venta,
   discount: apiDetail.descuento,
   quantity: apiDetail.cantidad,

@@ -3,6 +3,7 @@ import { ApiStaff, PaginatedResponse } from '../types/api';
 import { Staff, CreateStaffData } from '../types/users';
 
 const USER_TYPE_MAP = {
+  'Root': 1,
   'Administrador': 2,
   'Inventario': 3,
   'Ventas': 4,
@@ -111,4 +112,8 @@ export const updateStaff = async (encryptedId: string, data: Partial<Staff>): Pr
 
 export const toggleStaffStatus = async (encryptedId: string): Promise<void> => {
   await api.patch(`/api/user/empleado/activate/${encryptedId}/`);
+};
+
+export const changeStaffPassword = async (id: string, password: string): Promise<void> => {
+  await api.patch(`/api/user/empleado/changePassword/${id}/`, { password });
 };

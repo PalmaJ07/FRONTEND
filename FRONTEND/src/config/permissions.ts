@@ -86,10 +86,10 @@ export const ROUTE_PERMISSIONS: RoutePermission[] = [
     path: '/index/settings/proveedores',
     allowedRoles: ['Root', 'Administrador', 'Inventario'],
   },
-  {
+  /*{
     path: '/index/settings/roles',
     allowedRoles: ['Root', 'Administrador'],
-  },
+  },*/
   {
     path: '/index/settings/productos',
     allowedRoles: ['Root', 'Administrador', 'Inventario'],

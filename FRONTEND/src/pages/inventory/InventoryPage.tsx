@@ -277,6 +277,11 @@ export function InventoryPage() {
 
   const columns = [
     { 
+      header: 'Proveedor', 
+      accessor: 'proveedor' as keyof ProductDetail,
+      render: (value: number) => getSupplierName(value)
+    },
+    { 
       header: 'Producto', 
       accessor: 'producto' as keyof ProductDetail,
       render: (value: number) => getProductName(value)
@@ -287,21 +292,27 @@ export function InventoryPage() {
       render: (value: number | null) => getStorageName(value)
     },
     { 
-      header: 'Unidad de Medida', 
+      header: 'U/M', 
       accessor: 'config_unidad_medida' as keyof ProductDetail,
       render: (value: number) => getUnitName(value)
     },
     { header: 'Peso', accessor: 'peso' as keyof ProductDetail },
     { 
-      header: 'Presentación', 
+      header: 'Empaque Caja', 
       accessor: 'config_presentacion_producto' as keyof ProductDetail,
       render: (value: number) => getPresentationName(value)
     },
-    { 
-      header: 'Cantidad por Presentación', 
+    {
+      header: 'UxE',
       accessor: 'cantidad_por_presentacion' as keyof ProductDetail,
-      render: (value: number | null) => (value !== null && value < 0 ? 0 : value ?? 'N/A')
-    },
+      render: (value: number | null) => {
+        if (value !== null && value < 0) {
+          return '1 * 0'; // Si el valor es menor que 0, lo mostramos como 1*0
+        }
+        return value !== null ? `1 x ${value}` : 'N/A'; // Si no es null, mostramos el formato 1*{value}
+      }
+    }
+    ,
     { header: 'Unidades por Presentación', accessor: 'unidades_por_presentacion' as keyof ProductDetail },
     {
       header: 'Total Unidades',
@@ -309,25 +320,22 @@ export function InventoryPage() {
       render: (value: number | null) => (value !== null && value < 0 ? 0 : value ?? 'N/A')
     },
     { 
-      header: 'Precio Venta Presentación', 
-      accessor: 'precio_venta_presentacion' as keyof ProductDetail,
-      render: (value: number) => value + ' C$' 
-    },
-    { 
-      header: 'Precio Venta Unidades', 
-      accessor: 'precio_venta_unidades' as keyof ProductDetail,
-      render: (value: number) => value + ' C$'
-    },
-    { 
-      header: 'Proveedor', 
-      accessor: 'proveedor' as keyof ProductDetail,
-      render: (value: number) => getSupplierName(value)
-    },
-    { 
       header: 'Fecha Expiración', 
       accessor: 'fecha_expiracion' as keyof ProductDetail,
       render: (value: string | null) => value ?? 'N/A'
     },
+    { 
+      header: 'PxE', 
+      accessor: 'precio_venta_presentacion' as keyof ProductDetail,
+      render: (value: number) => value + ' C$' 
+    },
+    { 
+      header: 'PxU', 
+      accessor: 'precio_venta_unidades' as keyof ProductDetail,
+      render: (value: number) => value + ' C$'
+    },
+    
+    
   ];
 
   return (

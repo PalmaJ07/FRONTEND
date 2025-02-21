@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
 import { UserPlus } from "lucide-react";
 import Swal from "sweetalert2";
-import { Table } from "../../components/common/Table";
+import { TableColaborador } from "../../components/common/TableColaborador";
 import { Pagination } from "../../components/common/Pagination";
 import { SearchBar } from "../../components/common/SearchBar";
 import { StaffFilters } from "../../components/users/StaffFilters";
 import { StatusToggle } from "../../components/common/StatusToggle";
 import { AddStaffModal } from "../../components/users/AddStaffModal";
 import { EditStaffModal } from "./EditStaffModal";
+import { PasswordChangeModal } from "./ChangePassword";
 import { Staff, CreateStaffData } from "../../types/users";
 import {
   getStaffList,
   createStaff,
   updateStaff,
   toggleStaffStatus,
-  deleteStaff
+  deleteStaff,
+  changeStaffPassword
 } from "../../services/staff";
 import { useDebounce } from "../../hooks/useDebounce";
 import { createConfigService } from "../../services/config";
@@ -33,6 +35,7 @@ export function StaffList() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [warehouses, setWarehouses] = useState<{ id: string; name: string }[]>([]);
 
@@ -132,7 +135,33 @@ export function StaffList() {
     }
   };
 
+  const handlePasswordChange = (staff: Staff) => {
+    setSelectedStaff(staff);
+    setShowPasswordModal(true);
+  };
 
+  const handlePasswordUpdate = async (id: string, password: string) => {
+    try {
+      await changeStaffPassword(id, password);
+      setShowPasswordModal(false);
+      setSelectedStaff(null);
+      await Swal.fire({
+        title: 'Éxito',
+        text: 'Contraseña actualizada exitosamente',
+        icon: 'success',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      await Swal.fire({
+        title: 'Error',
+        text: 'No se pudo actualizar la contraseña',
+        icon: 'error',
+        confirmButtonColor: '#EF4444',
+      });
+    }
+  };
 
   const handleStatusToggle = async (staff: Staff) => {
     try {
@@ -253,7 +282,7 @@ export function StaffList() {
           <div className="p-4 text-center">Cargando...</div>
         ) : (
           <>
-            <Table
+            <TableColaborador
               data={staff}
               columns={columns}
               onEdit={(staff) => {
@@ -261,6 +290,7 @@ export function StaffList() {
                 setShowEditModal(true);
               }}
               onDelete={handleDelete}
+              onPasswordChange={handlePasswordChange}
             />
             <Pagination
               currentPage={currentPage}
@@ -281,8 +311,9 @@ export function StaffList() {
         onSubmit={handleCreate}
       />
 
-      {selectedStaff && (
-        <EditStaffModal
+{selectedStaff && (
+        <>
+          <EditStaffModal
           isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false);
@@ -291,6 +322,17 @@ export function StaffList() {
           onSubmit={handleEdit}
           staff={selectedStaff}
         />
+
+          <PasswordChangeModal
+            isOpen={showPasswordModal}
+            onClose={() => {
+              setShowPasswordModal(false);
+              setSelectedStaff(null);
+            }}
+            onSubmit={handlePasswordUpdate}
+            staff={selectedStaff}
+          />
+        </>
       )}
     </div>
   );

@@ -206,7 +206,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
 
         <div className="space-y-2">
           <label htmlFor="config_unidad_medida" className="block text-sm font-medium text-gray-700 mb-1">
-            Unidad de Medida
+            U/M
           </label>
           <select
             id="config_unidad_medida"
@@ -267,7 +267,7 @@ export function ProductDetailForm({ onSubmit, onCancel, initialData, isEditing =
 
         <div className="space-y-2">
           <label htmlFor="unidades_por_presentacion" className="block text-sm font-medium text-gray-700 mb-1">
-            Unidades por Presentación
+            U*E
           </label>
           <input
             type="number"

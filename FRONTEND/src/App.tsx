@@ -23,15 +23,12 @@ import { SalesPageAdmin } from './pages/sales/SalesPageAdmin';
 import { PrivateRoute } from './components/auth/PrivateRoute';
 import { useProfile } from './hooks/useProfile';
 
-
 function App() {
   const { profile } = useProfile();
-
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        
         <Route path="/index" element={
           <PrivateRoute>
             <DashboardLayout />
@@ -60,7 +57,6 @@ function App() {
           <Route path="settings/roles" element={<RolesPage />} />
           <Route path="settings/productos" element={<ProductsPage />} />
         </Route>
-
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

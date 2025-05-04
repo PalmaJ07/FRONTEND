@@ -15,6 +15,7 @@ export function ProductReturnModal({
   onSubmit, 
   title 
 }: ProductReturnModalProps) {
+  console.log("Modal abierto:", isOpen);
   if (!isOpen) return null;
 
   return (

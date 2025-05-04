@@ -157,7 +157,7 @@ export function ProductReturnForm({ onSubmit, onCancel }: ProductReturnFormProps
   }, []);
 
   if (isLoading && !warehouses.length) {
-    return <div className="text-center">Cargando...</div>;
+    return <div className="text-center">Cargando...Lol</div>;
   }
 
   return (

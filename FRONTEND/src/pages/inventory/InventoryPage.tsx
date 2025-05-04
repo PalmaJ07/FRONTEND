@@ -346,7 +346,10 @@ export function InventoryPage() {
         <div className="flex justify-between items-center">
           <div className="flex space-x-4">
             <button
+              
               onClick={() => setShowReturnModal(true)}
+              
+              
               className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
             >
               <RotateCcw className="h-5 w-5 mr-2" />

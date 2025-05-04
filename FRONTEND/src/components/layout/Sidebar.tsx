@@ -52,7 +52,7 @@ export function Sidebar() {
 
   return (
     <aside className="bg-gray-800 text-white w-64 min-h-screen p-4">
-      <div className="text-xl font-bold mb-8 pl-4">Mi Dashboard</div>
+      <div className="text-xl font-bold mb-8 pl-4">Distribuidora Sinai</div>
       <nav>
         {filteredMenuItems.map((item) => (
           <div key={item.label} className="mb-2">
